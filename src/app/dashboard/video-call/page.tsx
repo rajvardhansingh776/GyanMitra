@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -25,23 +26,23 @@ export default function VideoCallPage() {
           <div className="flex-1 relative rounded-lg overflow-hidden bg-muted border min-h-[300px] md:min-h-0">
             <Image
               src="https://placehold.co/1280x720.png"
-              alt="Teacher's Video"
+              alt="Student's Video"
               fill
               className="object-cover"
-              data-ai-hint="teacher video"
+              data-ai-hint="student video"
             />
             <div className="absolute bottom-4 left-4 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
-              Bharat Sir
+              Raj Singh
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative w-40 h-32 lg:w-60 lg:h-44 rounded-lg overflow-hidden bg-muted border self-start">
               <Image
                 src="https://placehold.co/240x176.png"
-                alt="Student's Video"
+                alt="Teacher's Video"
                 fill
                 className="object-cover"
-                data-ai-hint="student video"
+                data-ai-hint="teacher video"
               />
               <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-0.5 rounded-md text-xs">
                 You
@@ -70,8 +71,8 @@ export default function VideoCallPage() {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
             <div className="flex-1 bg-muted/50 rounded-lg p-4 text-sm space-y-2 overflow-y-auto">
-              <p><strong>Bharat Sir:</strong> Welcome, Raj! Let's start with quadratic equations.</p>
-              <p><strong>You:</strong> Sounds good, I had some trouble with the homework.</p>
+              <p><strong>You:</strong> Welcome, Raj! Let's start with quadratic equations.</p>
+              <p><strong>Raj Singh:</strong> Sounds good, I had some trouble with the homework.</p>
             </div>
             <div className="relative">
               <Textarea placeholder="Type your message here..." className="pr-12"/>
@@ -93,5 +94,3 @@ export default function VideoCallPage() {
     </div>
   );
 }
-
-    
