@@ -8,9 +8,26 @@ import { Mic, MicOff, Video, VideoOff, PhoneOff, ScreenShare, Send, HeartPulse, 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 export default function VideoCallPage() {
   const router = useRouter();
+  const { user } = useUser();
+  const isTeacher = user.email.includes("teacher");
+
+  const mainParticipant = isTeacher ? "Raj Singh" : "Bharat Sir";
+  const selfParticipant = "You";
+  
+  const chatTranscript = isTeacher 
+    ? [
+        { speaker: "You", text: "Welcome, Raj! Let's start with quadratic equations." },
+        { speaker: "Raj Singh", text: "Sounds good, I had some trouble with the homework." },
+      ]
+    : [
+        { speaker: "Bharat Sir", text: "Welcome, Raj! Let's start with quadratic equations." },
+        { speaker: "You", text: "Sounds good, I had some trouble with the homework." },
+      ];
+
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -26,26 +43,26 @@ export default function VideoCallPage() {
           <div className="flex-1 relative rounded-lg overflow-hidden bg-muted border min-h-[300px] md:min-h-0">
             <Image
               src="https://placehold.co/1280x720.png"
-              alt="Student's Video"
+              alt={`${mainParticipant}'s Video'`}
               fill
               className="object-cover"
-              data-ai-hint="student video"
+              data-ai-hint={isTeacher ? "student video" : "teacher video"}
             />
             <div className="absolute bottom-4 left-4 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
-              Raj Singh
+              {mainParticipant}
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative w-40 h-32 lg:w-60 lg:h-44 rounded-lg overflow-hidden bg-muted border self-start">
               <Image
                 src="https://placehold.co/240x176.png"
-                alt="Teacher's Video"
+                alt={`${selfParticipant}'s Video'`}
                 fill
                 className="object-cover"
-                data-ai-hint="teacher video"
+                data-ai-hint={isTeacher ? "teacher video" : "student video"}
               />
               <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-0.5 rounded-md text-xs">
-                You
+                {selfParticipant}
               </div>
             </div>
             <div className="bg-card p-2 rounded-lg border flex items-center justify-center gap-2">
@@ -71,8 +88,9 @@ export default function VideoCallPage() {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
             <div className="flex-1 bg-muted/50 rounded-lg p-4 text-sm space-y-2 overflow-y-auto">
-              <p><strong>You:</strong> Welcome, Raj! Let's start with quadratic equations.</p>
-              <p><strong>Raj Singh:</strong> Sounds good, I had some trouble with the homework.</p>
+              {chatTranscript.map((message, index) => (
+                <p key={index}><strong>{message.speaker}:</strong> {message.text}</p>
+              ))}
             </div>
             <div className="relative">
               <Textarea placeholder="Type your message here..." className="pr-12"/>
@@ -81,14 +99,16 @@ export default function VideoCallPage() {
               </Button>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button className="w-full" asChild>
-              <Link href="/dashboard/engagement-analysis">
-                <HeartPulse className="mr-2 h-4 w-4" />
-                Analyze Engagement
-              </Link>
-            </Button>
-          </CardFooter>
+          {isTeacher && (
+            <CardFooter>
+              <Button className="w-full" asChild>
+                <Link href="/dashboard/engagement-analysis">
+                  <HeartPulse className="mr-2 h-4 w-4" />
+                  Analyze Engagement
+                </Link>
+              </Button>
+            </CardFooter>
+          )}
         </Card>
       </div>
     </div>
