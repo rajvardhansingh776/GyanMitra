@@ -27,25 +27,27 @@ const studentUser: User = {
     avatar: "https://placehold.co/128x128.png",
 };
 
+// Default user when no role is specified.
+const defaultUser = teacherUser;
+
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const UserProviderContent = ({ children }: { children: ReactNode }) => {
   const searchParams = useSearchParams();
   const role = searchParams.get('role');
 
-  // Set the initial user based on the role only once.
-  const getInitialUser = () => {
-    // Default to teacher if role is not specified, but this should be less of an issue now.
-    return role === 'student' ? studentUser : teacherUser;
-  };
+  const [user, setUser] = useState<User>(defaultUser);
 
-  const [user, setUser] = useState<User>(getInitialUser);
-
-  // This effect runs once on initial load if the role parameter exists,
-  // and it won't re-run on every navigation anymore, making the state persistent.
+  // This effect now correctly sets the user based on the role parameter
+  // and persists that choice across navigations within the dashboard.
   useEffect(() => {
-    const initialUser = getInitialUser();
-    setUser(initialUser);
+    if (role === 'student') {
+      setUser(studentUser);
+    } else if (role === 'teacher') {
+      setUser(teacherUser);
+    }
+    // We only want this effect to run when the `role` URL parameter changes.
+    // This prevents the user from being reset on every navigation.
   }, [role]);
 
 
