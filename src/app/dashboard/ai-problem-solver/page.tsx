@@ -32,6 +32,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import type { AiProblemSolverOutput } from "@/ai/flows/ai-problem-solver";
+import { aiProblemSolver } from "@/ai/flows/ai-problem-solver";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -43,14 +44,6 @@ const formSchema = z.object({
   engagement: z.number().min(0).max(1),
   performance: z.number().min(0).max(1),
 });
-
-const mockSolution: AiProblemSolverOutput = {
-  solution:
-    "To solve for x in the equation 2x + 5 = 15, first subtract 5 from both sides to get 2x = 10. Then, divide both sides by 2 to find that x = 5.",
-  difficultyLevel: "Beginner",
-  explanation:
-    "We use two main steps here. The first is to isolate the term with 'x' (which is '2x') by doing the opposite of adding 5, which is subtracting 5. We have to do this to both sides to keep the equation balanced. The second step is to get 'x' by itself by doing the opposite of multiplying by 2, which is dividing by 2. Again, we do this to both sides. That's how we arrive at the answer!",
-};
 
 export default function AiProblemSolverPage() {
   const [result, setResult] = useState<AiProblemSolverOutput | null>(null);
@@ -66,16 +59,28 @@ export default function AiProblemSolverPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
-    console.log("Submitting:", values);
-    setTimeout(() => {
-      setResult(mockSolution);
+    try {
+      const response = await aiProblemSolver({
+        question: values.question,
+        engagementLevel: values.engagement,
+        pastPerformance: values.performance,
+      });
+      setResult(response);
+    } catch (error) {
+      console.error("Error solving problem:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with the AI. Please try again.",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   }
-  
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
