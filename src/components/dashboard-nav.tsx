@@ -38,7 +38,9 @@ export function DashboardNav() {
   const { setOpenMobile } = useSidebar();
 
   const handleLinkClick = () => {
-    setOpenMobile(false);
+    if (setOpenMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
