@@ -21,6 +21,7 @@ import { Bell, Settings, Palette, Loader2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SettingsState = {
   emailNotifications: boolean;
@@ -38,6 +39,11 @@ export default function SettingsPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Check if current settings are different from default settings
@@ -141,19 +147,23 @@ export default function SettingsPage() {
                     Select your preferred color scheme.
                   </p>
                 </div>
-                <Select
-                  value={theme}
-                  onValueChange={setTheme}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select theme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
-                  </SelectContent>
-                </Select>
+                {!mounted ? (
+                  <Skeleton className="w-[180px] h-10" />
+                ) : (
+                  <Select
+                    value={theme}
+                    onValueChange={setTheme}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">System</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
           </div>
