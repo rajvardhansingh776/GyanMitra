@@ -52,7 +52,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setMounted(true);
-    // When component mounts, sync the theme selection state
+    // When component mounts, sync the theme selection state from the provider
+    // The `theme` from useTheme() correctly gives us 'light', 'dark', or 'system'
     setSelectedTheme(theme || 'system');
   }, [theme]);
 
@@ -96,14 +97,18 @@ export default function SettingsPage() {
   };
   
   const handleReset = () => {
-    setSettings(savedSettingsData);
-    setSelectedTheme(savedThemeValue);
-    setTheme(savedThemeValue);
-    toast({
-      title: "Settings Reset",
-      description: "Your settings have been restored to the last saved state.",
-      variant: 'default'
-    });
+    setIsLoading(true);
+    setTimeout(() => {
+      setSettings(savedSettingsData);
+      setSelectedTheme(savedThemeValue);
+      setTheme(savedThemeValue); // Also reset the live theme
+      setIsLoading(false);
+      toast({
+        title: "Settings Reset",
+        description: "Your settings have been restored to the last saved state.",
+        variant: 'default'
+      });
+    }, 500);
   };
 
   return (
