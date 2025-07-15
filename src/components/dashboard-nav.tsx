@@ -16,16 +16,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useUser } from "@/context/UserContext";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/sessions", label: "Recent Sessions", icon: BookOpenText },
   { href: "/dashboard/video-call", label: "Video Call", icon: Video },
-  {
-    href: "/dashboard/engagement-analysis",
-    label: "Engagement Analysis",
-    icon: HeartPulse,
-  },
   {
     href: "/dashboard/gyanmitra-ai",
     label: "GyanMitra AI",
@@ -33,9 +29,21 @@ const navItems = [
   },
 ];
 
+const teacherNavItems = [
+    ...navItems,
+    {
+        href: "/dashboard/engagement-analysis",
+        label: "Engagement Analysis",
+        icon: HeartPulse,
+      },
+]
+
 export function DashboardNav() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
+  const { user } = useUser();
+  const isTeacher = user.email.includes('teacher');
+  const currentNavItems = isTeacher ? teacherNavItems : navItems;
 
   const handleLinkClick = () => {
     if (setOpenMobile) {
@@ -43,11 +51,16 @@ export function DashboardNav() {
     }
   };
 
+  const getHref = (href: string) => {
+    const role = isTeacher ? 'teacher' : 'student';
+    return `${href}?role=${role}`;
+  }
+
   return (
     <SidebarMenu>
-      {navItems.map((item) => (
+      {currentNavItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href} onClick={handleLinkClick}>
+          <Link href={getHref(item.href)} onClick={handleLinkClick}>
             <SidebarMenuButton
               isActive={pathname === item.href}
               tooltip={item.label}

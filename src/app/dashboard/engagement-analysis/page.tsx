@@ -91,6 +91,7 @@ export default function EngagementAnalysisPage() {
 
       <div className="flex flex-col items-center text-center mb-8">
         <HeartPulse className="h-16 w-16 text-primary mb-4" />
+        <p className="text-muted-foreground max-w-md">Click the button below to start a mock analysis of a pre-recorded student session. In a real application, this would use the live video feed.</p>
         <Button onClick={handleAnalysis} disabled={isLoading} className="mt-6">
           {isLoading ? (
             <>

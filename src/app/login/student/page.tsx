@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BrainCircuit, GraduationCap } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import Link from "next/link";
 
 export default function StudentLoginPage() {
@@ -50,7 +50,7 @@ export default function StudentLoginPage() {
                     <Input id="password" type="password" defaultValue="password" required />
             </div>
             <Button type="submit" className="w-full" asChild>
-              <Link href="/dashboard">Login</Link>
+              <Link href="/dashboard?role=student">Login</Link>
             </Button>
             <Button variant="outline" className="w-full" asChild>
               <Link href="#">Create an account</Link>

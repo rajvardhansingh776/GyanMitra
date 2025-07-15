@@ -50,7 +50,7 @@ export default function TeacherLoginPage() {
                     <Input id="password" type="password" defaultValue="password" required />
             </div>
             <Button type="submit" className="w-full" asChild>
-              <Link href="/dashboard">Login</Link>
+              <Link href="/dashboard?role=teacher">Login</Link>
             </Button>
              <Button variant="ghost" className="w-full" asChild size="sm">
               <Link href="/">Back to main page</Link>
