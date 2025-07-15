@@ -59,8 +59,8 @@ export async function gyanmitraAi(
   return output!;
 }
 
-export function gyanmitraAiStream(input: GyanMitraAiInput) {
-  const { stream } = gyanmitraAiPrompt(input);
+export async function gyanmitraAiStream(input: GyanMitraAiInput) {
+  const { stream } = await gyanmitraAiPrompt(input);
   return stream;
 }
 
