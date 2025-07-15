@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'MindBloom',
+ title: 'GyanMitra',
   description: 'AI-integrated online learning to help students bloom.',
 };
 

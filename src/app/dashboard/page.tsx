@@ -51,7 +51,7 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Welcome back, Alex!</CardTitle>
+          <CardTitle>Welcome back, Raj!</CardTitle>
           <CardDescription>
             Here's a snapshot of your learning journey. Keep up the great work!
           </CardDescription>

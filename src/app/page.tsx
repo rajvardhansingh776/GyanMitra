@@ -33,7 +33,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="student@example.com"
+                defaultValue="raj.doe@example.com"
                 required
               />
             </div>
@@ -47,7 +47,7 @@ export default function LoginPage() {
                   Forgot your password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+                    <Input id="password" type="password" defaultValue="password" required />
             </div>
             <Button type="submit" className="w-full" asChild>
               <Link href="/dashboard">Login</Link>

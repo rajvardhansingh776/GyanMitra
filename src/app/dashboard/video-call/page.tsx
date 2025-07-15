@@ -57,7 +57,7 @@ export default function VideoCallPage() {
         </CardHeader>
         <CardContent className="flex-1 flex flex-col gap-4">
           <div className="flex-1 bg-muted/50 rounded-lg p-4 text-sm space-y-2 overflow-y-auto">
-            <p><strong>Teacher:</strong> Welcome, Alex! Let's start with quadratic equations.</p>
+            <p><strong>Teacher:</strong> Welcome, Raj! Let's start with quadratic equations.</p>
             <p><strong>You:</strong> Sounds good, I had some trouble with the homework.</p>
           </div>
           <div className="relative">

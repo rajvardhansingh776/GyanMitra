@@ -1,4 +1,4 @@
-# **App Name**: MindBloom
+# **App Name**: GyanMitra
 
 ## Core Features:
 
