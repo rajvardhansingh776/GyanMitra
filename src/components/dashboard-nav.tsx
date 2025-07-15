@@ -7,6 +7,7 @@ import {
   HeartPulse,
   LayoutDashboard,
   Video,
+  BookOpenText,
 } from "lucide-react";
 
 import {
@@ -17,6 +18,7 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/sessions", label: "Recent Sessions", icon: BookOpenText },
   { href: "/dashboard/video-call", label: "Video Call", icon: Video },
   {
     href: "/dashboard/engagement-analysis",
@@ -39,7 +41,7 @@ export function DashboardNav() {
         <SidebarMenuItem key={item.href}>
           <Link href={item.href}>
             <SidebarMenuButton
-              isActive={pathname.startsWith(item.href)}
+              isActive={pathname === item.href}
               tooltip={item.label}
               className="justify-start"
             >
