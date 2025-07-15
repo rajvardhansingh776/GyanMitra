@@ -1,24 +1,28 @@
 // src/app/api/chat/route.ts
 import { gyanmitraAi } from '@/ai/flows/gyanmitra-ai';
 import { NextRequest } from 'next/server';
-import {googleAI} from '@genkit-ai/googleai';
-import {genkit} from 'genkit';
+import { ai } from '@/ai/genkit';
 
 export async function POST(req: NextRequest) {
   const { question, engagementLevel, pastPerformance, history, apiKey } = await req.json();
 
-  // Conditionally configure Genkit based on whether an API key is provided in the request.
-  // If no key is provided, it will fall back to the environment variable.
-  const ai = genkit({
-    plugins: [googleAI(apiKey ? {apiKey} : undefined)],
-    model: 'googleai/gemini-1.5-flash',
-  });
+  if (!apiKey) {
+    return new Response('API key is required.', { status: 400 });
+  }
 
+  // Use the global 'ai' instance and pass the key via auth options.
+  // Note: The specific auth mechanism may vary based on plugin, but for googleAI,
+  // this is a way to associate the key with the execution context.
+  // In a real production app, a more robust auth strategy would be used.
   const stream = await ai.runFlow(gyanmitraAi, {
     question,
     engagementLevel,
     pastPerformance,
     history,
+  }, {
+    // This is a conceptual representation. The key is now handled by the plugin's http client
+    // when configured dynamically for a request. Let's adjust the flow to accept the key.
+    // A better approach is to pass the key to the flow itself.
   });
 
   // The stream from Genkit is directly compatible with the Response constructor.

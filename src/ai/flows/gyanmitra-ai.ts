@@ -7,8 +7,11 @@
  * - GyanMitraAiInput - The input type for the gyanmitraAi function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
+import { genkit } from 'genkit';
+import { z } from 'genkit/zod';
+
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
@@ -31,11 +34,13 @@ const GyanMitraAiInputSchema = z.object({
     .array(MessageSchema)
     .optional()
     .describe('The conversation history.'),
+  apiKey: z.string().optional().describe("The user's Google AI API Key.")
 });
 export type GyanMitraAiInput = z.infer<typeof GyanMitraAiInputSchema>;
 
+
 export async function gyanmitraAi(input: GyanMitraAiInput) {
-    return gyanmitraAiFlow(input);
+  return gyanmitraAiFlow(input);
 }
 
 
@@ -47,8 +52,14 @@ const gyanmitraAiFlow = ai.defineFlow(
     stream: true,
   },
   async (input) => {
-    const { stream } = await ai.generate({
-        prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
+    // Dynamically configure a new Genkit instance with the provided API key
+    const dynamicAi = genkit({
+      plugins: [googleAI(input.apiKey ? { apiKey: input.apiKey } : {})],
+      model: 'googleai/gemini-1.5-flash',
+    });
+
+    const { stream } = await dynamicAi.generate({
+      prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
     
     Analyze the student's profile:
     - Engagement Level: {{{engagementLevel}}} (0=low, 1=high)
@@ -75,22 +86,22 @@ const gyanmitraAiFlow = ai.defineFlow(
     
     Your response MUST be only the markdown text of the answer. Do not wrap it in JSON.
     `,
-        history: input.history?.map(m => ({...m, role: m.role === 'assistant' ? 'model' : 'user'})) || [],
-        data: input,
-        stream: true,
-      });
+      history: input.history?.map(m => ({...m, role: m.role === 'assistant' ? 'model' : 'user'})) || [],
+      data: input,
+      stream: true,
+    });
       
-      const outputStream = new ReadableStream({
-        async start(controller) {
-            for await (const chunk of stream) {
-                if (chunk.text) {
-                    controller.enqueue(chunk.text);
-                }
-            }
-            controller.close();
-        }
-      });
+    const outputStream = new ReadableStream({
+      async start(controller) {
+          for await (const chunk of stream) {
+              if (chunk.text) {
+                  controller.enqueue(chunk.text);
+              }
+          }
+          controller.close();
+      }
+    });
     
-      return outputStream;
+    return outputStream;
   }
 );

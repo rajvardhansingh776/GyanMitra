@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -91,6 +90,15 @@ export default function GyanMitraAiPage() {
       });
     }
   }, [messages]);
+  
+  // This effect will re-run the form submission if an API key is provided
+  // after the initial attempt.
+  useEffect(() => {
+    if (apiKey && isLoading && form.getValues("question")) {
+        form.handleSubmit(onSubmit)();
+    }
+  }, [apiKey, isLoading]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!apiKey) {
@@ -164,7 +172,12 @@ export default function GyanMitraAiPage() {
       };
       setMessages((prev) => {
         const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = errorMessage;
+        // Replace the empty assistant message with the error
+        if (newMessages[newMessages.length - 1]?.role === "assistant") {
+           newMessages[newMessages.length - 1] = errorMessage;
+        } else {
+           newMessages.push(errorMessage)
+        }
         return newMessages;
       });
       toast({
@@ -191,8 +204,10 @@ export default function GyanMitraAiPage() {
       setApiKey(tempApiKey);
       setIsApiKeyDialogOpen(false);
       toast({ title: "API Key Saved", description: "You can now chat with the AI." });
-      // Resubmit the form
-      form.handleSubmit(onSubmit)();
+      // Re-submit the form if a question was already entered.
+      if (form.getValues("question")) {
+        form.handleSubmit(onSubmit)();
+      }
     }
   };
 
