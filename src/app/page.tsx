@@ -1,63 +1,52 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { BrainCircuit } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BrainCircuit, GraduationCap, UserSquare } from "lucide-react";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function WelcomePage() {
   return (
     <main className="flex items-center justify-center min-h-screen p-4 bg-background">
-      <Card className="w-full max-w-sm mx-auto">
-        <CardHeader>
-          <div className="flex justify-center mb-4">
+      <div className="flex flex-col items-center text-center">
+        <div className="flex items-center gap-4 mb-6">
             <div className="bg-primary/10 p-3 rounded-full">
-              <BrainCircuit className="h-8 w-8 text-primary" />
+              <BrainCircuit className="h-10 w-10 text-primary" />
             </div>
-          </div>
-          <CardTitle className="text-2xl text-center">Welcome to GyanMitra</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your learning dashboard.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                defaultValue="raj.singh@example.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="#"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-                    <Input id="password" type="password" defaultValue="password" required />
-            </div>
-            <Button type="submit" className="w-full" asChild>
-              <Link href="/dashboard">Login</Link>
-            </Button>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="#">Create an account</Link>
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            <h1 className="text-5xl font-bold tracking-tighter">GyanMitra</h1>
+        </div>
+        <p className="max-w-2xl text-lg text-muted-foreground mb-12">
+            Your personalized AI-powered learning companion. Choose your role to get started.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+            <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="items-center">
+                    <GraduationCap className="h-12 w-12 text-primary mb-4" />
+                    <CardTitle className="text-2xl">For Students</CardTitle>
+                    <CardDescription>
+                        Access your dashboard, join video calls, and get AI-powered help.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                    <Button asChild size="lg" className="w-full max-w-xs">
+                        <Link href="/login/student">Student Portal</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="items-center">
+                    <UserSquare className="h-12 w-12 text-primary mb-4" />
+                    <CardTitle className="text-2xl">For Teachers</CardTitle>
+                    <CardDescription>
+                        Manage sessions, analyze student engagement, and more.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                     <Button asChild size="lg" className="w-full max-w-xs">
+                        <Link href="/login/teacher">Teacher Portal</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+      </div>
     </main>
   );
 }
