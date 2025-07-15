@@ -88,7 +88,7 @@ RULES:
     -   If it's the **first problem-solving question**, provide a step-by-step breakdown.
         -   For a student with **low engagement/performance**, the explanation should be more foundational.
         -   For a student with **high engagement/performance**, the explanation can be more succinct.
-    -   For **follow-up questions**, DO NOT provide a separate explanation field. Integrate any necessary clarification into the conversational `solution` text. The `explanation` field must be omitted for follow-ups.
+    -   For **follow-up questions**, DO NOT provide a separate explanation field. Integrate any necessary clarification into the conversational 'solution' text. The 'explanation' field must be omitted for follow-ups.
 5.  **Difficulty Level**:
     - Assess the complexity of your own solution (e.g., "Beginner", "Intermediate", "Advanced") and provide it ONLY for the **first question** in a conversation. Omit it for all follow-up questions.
 
