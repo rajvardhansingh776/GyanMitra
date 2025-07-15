@@ -35,15 +35,9 @@ const GyanMitraAiInputSchema = z.object({
 export type GyanMitraAiInput = z.infer<typeof GyanMitraAiInputSchema>;
 
 export async function gyanmitraAiStream(input: GyanMitraAiInput) {
-  const { stream } = gyanmitraAiPrompt(input);
-  return stream;
-}
-
-const gyanmitraAiPrompt = ai.definePrompt({
-  name: 'gyanmitraAiPrompt',
-  input: {schema: GyanMitraAiInputSchema},
-  output: {schema: z.string()},
-  prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
+  const { stream } = ai.generateStream({
+    prompt: {
+      text: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
 
 Analyze the student's profile:
 - Engagement Level: {{{engagementLevel}}} (0=low, 1=high)
@@ -70,4 +64,24 @@ RULES:
 
 Your response MUST be only the markdown text of the answer. Do not wrap it in JSON.
 `,
-});
+      data: input,
+    },
+    history: input.history?.map(m => ({
+        role: m.role === 'assistant' ? 'model' : m.role,
+        content: [{text: m.content}]
+    }))
+  });
+  
+  const outputStream = new ReadableStream({
+    async start(controller) {
+        for await (const chunk of stream) {
+            if (chunk.text) {
+                controller.enqueue(chunk.text);
+            }
+        }
+        controller.close();
+    }
+  });
+
+  return outputStream;
+}
