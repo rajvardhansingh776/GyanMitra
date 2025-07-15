@@ -237,12 +237,14 @@ export default function AiProblemSolverPage() {
                         </Button>
                       </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold mb-2">Difficulty Level</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {result.difficultyLevel}
-                      </p>
-                    </div>
+                    {result.difficultyLevel && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Difficulty Level</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {result.difficultyLevel}
+                        </p>
+                      </div>
+                    )}
                     {result.explanation && (
                       <div>
                         <h3 className="font-semibold mb-2">Explanation</h3>
