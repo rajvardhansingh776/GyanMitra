@@ -84,7 +84,7 @@ This is the conversation history:
 The student's latest question is: {{{question}}}
 
 RULES:
-1.  **Analyze the Question Type**: First, determine if the question is a factual query (e.g., "What is photosynthesis?"), a problem-solving question (e.g., "Solve for x in 2x+5=15"), or a follow-up question related to the history.
+1.  **Analyze the Question Type**: First, determine if this is a factual query (e.g., "What is photosynthesis?"), a problem-solving question (e.g., "Solve for x in 2x+5=15"), or a follow-up question related to the history.
 2.  **Formatting**: Format your response using Markdown. Use code blocks for any code snippets, math equations, or commands. Use lists for steps.
 3.  **Solution**: Provide a direct, accurate answer to the question.
     - For the **first question** in a conversation (when history is empty), provide a comprehensive solution.
