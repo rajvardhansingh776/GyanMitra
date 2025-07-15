@@ -176,6 +176,17 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        // On the server and during hydration, render a placeholder or nothing
+        return null;
+    }
+
 
     if (collapsible === "none") {
       return (
