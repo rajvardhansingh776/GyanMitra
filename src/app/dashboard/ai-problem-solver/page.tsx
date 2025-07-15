@@ -288,14 +288,6 @@ export default function AiProblemSolverPage() {
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                            <ReactMarkdown>{message.content}</ReactMarkdown>
                         </div>
-                        {message.difficultyLevel && (
-                          <div className="mt-4 pt-2 border-t">
-                            <h3 className="font-semibold text-xs mb-1">
-                              Difficulty Level
-                            </h3>
-                            <p className="text-xs">{message.difficultyLevel}</p>
-                          </div>
-                        )}
                         {message.explanation && (
                           <div className="mt-4 pt-2 border-t">
                             <h3 className="font-semibold text-xs mb-1">
