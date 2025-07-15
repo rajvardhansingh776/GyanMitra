@@ -28,19 +28,16 @@ import {
   BrainCircuit,
   Loader2,
   Sparkles,
-  ClipboardCheck,
   ArrowLeft,
   User,
 } from "lucide-react";
-import type { GyanMitraAiOutput } from "@/ai/flows/gyanmitra-ai";
-import { gyanmitraAi } from "@/ai/flows/gyanmitra-ai";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import type { GyanMitraAiOutput } from "@/ai/flows/gyanmitra-ai";
 
 const formSchema = z.object({
   question: z
@@ -54,7 +51,6 @@ const formSchema = z.object({
 type Message = {
   role: "user" | "assistant";
   content: string;
-  explanation?: string;
 };
 
 export default function GyanMitraAiPage() {
@@ -82,26 +78,6 @@ export default function GyanMitraAiPage() {
     }
   }, [messages]);
 
-  const streamText = (
-    text: string,
-    onChunk: (chunk: string) => void
-  ): Promise<void> => {
-    return new Promise((resolve) => {
-      let index = 0;
-      const words = text.split(" ");
-      const interval = setInterval(() => {
-        if (index < words.length) {
-          const chunk = (index > 0 ? " " : "") + words[index];
-          onChunk(chunk);
-          index++;
-        } else {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 10);
-    });
-  };
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const userMessage: Message = { role: "user", content: values.question };
     setMessages((prev) => [...prev, userMessage]);
@@ -113,39 +89,42 @@ export default function GyanMitraAiPage() {
       content: msg.content,
     }));
 
+    // Add a placeholder for the assistant's response
+    setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+
     try {
-      const response = await gyanmitraAi({
-        question: values.question,
-        engagementLevel: values.engagement,
-        pastPerformance: values.performance,
-        history: history,
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: values.question,
+          engagement: values.engagement,
+          performance: values.performance,
+          history: history,
+        }),
       });
 
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: "",
-        explanation: "",
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      if (!response.body) {
+        throw new Error("The response body is empty.");
+      }
 
-      await streamText(response.solution, (chunk) => {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let fullResponse = "";
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunk = decoder.decode(value, { stream: true });
+        fullResponse += chunk;
         setMessages((prev) =>
           prev.map((msg, i) =>
-            i === prev.length - 1 ? { ...msg, content: msg.content + chunk } : msg
+            i === prev.length - 1 ? { ...msg, content: fullResponse } : msg
           )
         );
-      });
-
-      if (response.explanation) {
-        await streamText(response.explanation, (chunk) => {
-          setMessages((prev) =>
-            prev.map((msg, i) =>
-              i === prev.length - 1
-                ? { ...msg, explanation: (msg.explanation || "") + chunk }
-                : msg
-            )
-          );
-        });
       }
     } catch (error) {
       console.error("Error solving problem:", error);
@@ -153,7 +132,8 @@ export default function GyanMitraAiPage() {
         role: "assistant",
         content: "I'm sorry, I encountered an error. Please try again.",
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      // Replace the placeholder with the error message
+      setMessages((prev) => prev.slice(0, -1).concat(errorMessage));
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -172,6 +152,46 @@ export default function GyanMitraAiPage() {
       }
     }
   };
+  
+  const extractAndRender = (content: string) => {
+    try {
+      // Try to parse the content as JSON. If it fails, it's a partial stream.
+      const parsed = JSON.parse(content) as GyanMitraAiOutput;
+      return (
+         <>
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+               <ReactMarkdown>{parsed.solution}</ReactMarkdown>
+            </div>
+            {parsed.explanation && (
+              <div className="mt-4 pt-4 border-t">
+                <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Explanation
+                </h3>
+                 <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{parsed.explanation}</ReactMarkdown>
+                </div>
+              </div>
+            )}
+         </>
+      );
+    } catch (e) {
+      // If parsing fails, it's likely a partial response. Render what we have.
+      let partialContent = content;
+      // Clean up common partial JSON artifacts for better display
+      partialContent = partialContent.replace(/^{\s*"solution"\s*:\s*"/, '');
+      partialContent = partialContent.replace(/",\s*"explanation"\s*:.*/, '');
+      partialContent = partialContent.replace(/\\n/g, '\n').replace(/\\"/g, '"');
+      
+      return (
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+           <ReactMarkdown>{partialContent}</ReactMarkdown>
+           <Loader2 className="h-4 w-4 animate-spin ml-2 inline-block" />
+        </div>
+      );
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -276,20 +296,10 @@ export default function GyanMitraAiPage() {
                             : "bg-primary text-primary-foreground"
                         )}
                       >
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                           <ReactMarkdown>{message.content}</ReactMarkdown>
-                        </div>
-                        {message.explanation && (
-                          <div className="mt-4 pt-4 border-t">
-                            <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <Sparkles className="h-4 w-4 text-primary" />
-                              Explanation
-                            </h3>
-                             <div className="prose prose-sm dark:prose-invert max-w-none">
-                              <ReactMarkdown>{message.explanation}</ReactMarkdown>
-                            </div>
-                          </div>
-                        )}
+                       {message.role === 'assistant'
+                         ? extractAndRender(message.content)
+                         : <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></div>
+                       }
                       </div>
                       {message.role === "user" && (
                          <Avatar className="h-8 w-8">

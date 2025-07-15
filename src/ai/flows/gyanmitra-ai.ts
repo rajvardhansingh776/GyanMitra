@@ -55,10 +55,16 @@ export type GyanMitraAiOutput = z.infer<typeof GyanMitraAiOutputSchema>;
 export async function gyanmitraAi(
   input: GyanMitraAiInput
 ): Promise<GyanMitraAiOutput> {
-  return gyanmitraAiFlow(input);
+  const { output } = await gyanmitraAiPrompt(input);
+  return output!;
 }
 
-const prompt = ai.definePrompt({
+export function gyanmitraAiStream(input: GyanMitraAiInput) {
+  const { stream } = gyanmitraAiPrompt(input);
+  return stream;
+}
+
+const gyanmitraAiPrompt = ai.definePrompt({
   name: 'gyanmitraAiPrompt',
   input: {schema: GyanMitraAiInputSchema},
   output: {schema: GyanMitraAiOutputSchema},
@@ -96,6 +102,8 @@ Your response must be structured to directly match the output schema.
 `,
 });
 
+// We are not using this flow directly in the UI anymore, but it's good practice
+// to have a flow defined for potential future use (e.g., in other flows).
 const gyanmitraAiFlow = ai.defineFlow(
   {
     name: 'gyanmitraAiFlow',
@@ -103,7 +111,7 @@ const gyanmitraAiFlow = ai.defineFlow(
     outputSchema: GyanMitraAiOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await gyanmitraAiPrompt(input);
     return output!;
   }
 );
