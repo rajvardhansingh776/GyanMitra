@@ -21,24 +21,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Slider } from "@/components/ui/slider";
 import { useState, useEffect, useRef } from "react";
 import {
   Bot,
   BrainCircuit,
   Loader2,
-  KeyRound,
   ArrowLeft,
   User,
 } from "lucide-react";
@@ -69,9 +57,6 @@ export default function GyanMitraAiPage() {
   const { toast } = useToast();
   const router = useRouter();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
-  const [tempApiKey, setTempApiKey] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -90,22 +75,8 @@ export default function GyanMitraAiPage() {
       });
     }
   }, [messages]);
-  
-  // This effect will re-run the form submission if an API key is provided
-  // after the initial attempt.
-  useEffect(() => {
-    if (apiKey && isLoading && form.getValues("question")) {
-        form.handleSubmit(onSubmit)();
-    }
-  }, [apiKey, isLoading]);
-
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!apiKey) {
-      setIsApiKeyDialogOpen(true);
-      return;
-    }
-    
     const userMessage: Message = { role: "user", content: values.question };
     setMessages((prev) => [
       ...prev,
@@ -128,10 +99,9 @@ export default function GyanMitraAiPage() {
         },
         body: JSON.stringify({
           question: values.question,
-          engagement: values.engagement,
-          performance: values.performance,
+          engagementLevel: values.engagement,
+          pastPerformance: values.performance,
           history: history,
-          apiKey: apiKey,
         }),
       });
 
@@ -199,18 +169,6 @@ export default function GyanMitraAiPage() {
     }
   };
 
-  const handleApiKeySave = () => {
-    if (tempApiKey) {
-      setApiKey(tempApiKey);
-      setIsApiKeyDialogOpen(false);
-      toast({ title: "API Key Saved", description: "You can now chat with the AI." });
-      // Re-submit the form if a question was already entered.
-      if (form.getValues("question")) {
-        form.handleSubmit(onSubmit)();
-      }
-    }
-  };
-
   const renderAssistantMessage = (message: Message, isLastMessage: boolean) => {
     if (isLoading && isLastMessage && message.content === '') {
        return (
@@ -231,34 +189,6 @@ export default function GyanMitraAiPage() {
 
   return (
     <>
-    <AlertDialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-primary"/>
-            Enter Your Google AI API Key
-            </AlertDialogTitle>
-          <AlertDialogDescription>
-            To use GyanMitra AI, you need to provide your own Google AI API key.
-            Your key is only stored in this browser session and not saved on any server.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="py-2">
-          <Input 
-            placeholder="Enter your API key here"
-            value={tempApiKey}
-            onChange={(e) => setTempApiKey(e.target.value)}
-            type="password"
-          />
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleApiKeySave} disabled={!tempApiKey}>
-            Save and Continue
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => router.back()}>
@@ -323,17 +253,11 @@ export default function GyanMitraAiPage() {
         </div>
         <div className="md:col-span-2">
           <Card className="h-full flex flex-col min-h-[70vh] md:min-h-0">
-            <CardHeader className="flex flex-row justify-between items-start">
-              <div>
+            <CardHeader>
                 <CardTitle>Conversation</CardTitle>
                 <CardDescription>
                   Ask a question to start. Use Shift+Enter for new lines.
                 </CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setIsApiKeyDialogOpen(true)}>
-                <KeyRound className="mr-2 h-4 w-4"/>
-                <span>API Key</span>
-              </Button>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
               <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
@@ -342,7 +266,6 @@ export default function GyanMitraAiPage() {
                     <div className="flex flex-col items-center justify-center text-center h-full text-muted-foreground pt-16">
                       <Bot className="h-16 w-16 mb-4" />
                       <p>Your conversation will appear here.</p>
-                      {!apiKey && <p className="text-sm mt-2">Click the "API Key" button to get started.</p>}
                     </div>
                   )}
                   {messages.map((message, index) => (
