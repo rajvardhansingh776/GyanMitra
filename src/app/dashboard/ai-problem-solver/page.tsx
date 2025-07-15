@@ -84,6 +84,13 @@ export default function AiProblemSolverPage() {
     }
   }
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey && !isLoading) {
+      event.preventDefault();
+      form.handleSubmit(onSubmit)();
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -94,7 +101,7 @@ export default function AiProblemSolverPage() {
 
   return (
     <div className="flex flex-col gap-4">
-       <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4" />
           <span className="sr-only">Back</span>
@@ -131,6 +138,7 @@ export default function AiProblemSolverPage() {
                             placeholder="e.g., How do I solve 2x + 5 = 15?"
                             rows={5}
                             {...field}
+                            onKeyDown={handleKeyDown}
                           />
                         </FormControl>
                         <FormMessage />
