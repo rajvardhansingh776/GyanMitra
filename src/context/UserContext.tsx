@@ -15,8 +15,8 @@ interface UserContextType {
 }
 
 const defaultUser: User = {
-  fullName: "Raj Singh",
-  email: "raj.singh@example.com",
+  fullName: "Bharat Sir",
+  email: "bharat.teacher@example.com",
   avatar: "https://placehold.co/128x128.png",
 };
 

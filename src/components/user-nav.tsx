@@ -27,7 +27,7 @@ export function UserNav() {
             <AvatarImage
               src={user.avatar}
               alt={user.fullName}
-              data-ai-hint="student avatar"
+              data-ai-hint="teacher avatar"
             />
             <AvatarFallback>{fallback}</AvatarFallback>
           </Avatar>

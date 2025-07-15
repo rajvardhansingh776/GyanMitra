@@ -116,7 +116,7 @@ export default function ProfilePage() {
               <AvatarImage
                 src={user.avatar}
                 alt={user.fullName}
-                data-ai-hint="student avatar"
+                data-ai-hint="teacher avatar"
               />
               <AvatarFallback>
                 {user.fullName.split(" ").map(n => n[0]).join("")}
