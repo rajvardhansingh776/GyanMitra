@@ -38,7 +38,6 @@ import ReactMarkdown from "react-markdown";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { GyanMitraAiOutput } from "@/ai/flows/gyanmitra-ai";
 
 const formSchema = z.object({
   question: z
@@ -52,7 +51,6 @@ const formSchema = z.object({
 type Message = {
   role: "user" | "assistant";
   content: string; 
-  explanation?: string;
 };
 
 export default function GyanMitraAiPage() {
@@ -82,11 +80,10 @@ export default function GyanMitraAiPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const userMessage: Message = { role: "user", content: values.question };
-    // Add user message and a placeholder for the assistant's response
     setMessages((prev) => [
       ...prev,
       userMessage,
-      { role: "assistant", content: "" },
+      { role: "assistant", content: "" }, // Add a placeholder for the assistant's response
     ]);
     setIsLoading(true);
     form.reset({ ...values, question: "" });
@@ -120,28 +117,22 @@ export default function GyanMitraAiPage() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullResponse = "";
       
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        fullResponse += decoder.decode(value, { stream: true });
+
+        const chunk = decoder.decode(value, { stream: true });
+        
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage.role === 'assistant') {
+            lastMessage.content += chunk;
+          }
+          return newMessages;
+        });
       }
-
-      const parsedResponse = JSON.parse(fullResponse) as GyanMitraAiOutput;
-      
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: parsedResponse.solution,
-        explanation: parsedResponse.explanation,
-      };
-
-      // Replace the placeholder with the final message
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = assistantMessage;
-        return newMessages;
-      });
 
     } catch (error) {
       console.error("Error solving problem:", error);
@@ -149,7 +140,6 @@ export default function GyanMitraAiPage() {
         role: "assistant",
         content: "I'm sorry, I encountered an error. Please try again.",
       };
-      // Replace the placeholder with the error message
       setMessages((prev) => {
         const newMessages = [...prev];
         newMessages[newMessages.length - 1] = errorMessage;
@@ -185,23 +175,10 @@ export default function GyanMitraAiPage() {
     }
 
     return (
-        <>
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-             <ReactMarkdown>{message.content || ''}</ReactMarkdown>
-          </div>
-          {message.explanation && (
-            <div className="mt-4 pt-4 border-t">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                Explanation
-              </h3>
-               <div className="prose prose-sm dark:prose-invert max-w-none">
-                <ReactMarkdown>{message.explanation}</ReactMarkdown>
-              </div>
-            </div>
-          )}
-       </>
-      )
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+           <ReactMarkdown>{message.content || ''}</ReactMarkdown>
+        </div>
+    )
   };
 
 
