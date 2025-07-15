@@ -39,7 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const formSchema = z.object({
   question: z
     .string()
-    .min(10, { message: "Please enter a question of at least 10 characters." })
+    .min(1, { message: "Please enter a question." })
     .max(500, { message: "Question must not exceed 500 characters." }),
   engagement: z.number().min(0).max(1),
   performance: z.number().min(0).max(1),
