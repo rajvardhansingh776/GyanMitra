@@ -12,6 +12,6 @@ export async function POST(req: NextRequest) {
     history,
   });
 
-  // Pipe the raw stream from Genkit to the response
-  return new Response(stream.pipeThrough(new TextEncoderStream()));
+  // The stream from Genkit is directly compatible with the Response constructor.
+  return new Response(stream);
 }
