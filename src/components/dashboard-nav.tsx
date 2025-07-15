@@ -26,8 +26,8 @@ const navItems = [
     icon: HeartPulse,
   },
   {
-    href: "/dashboard/ai-problem-solver",
-    label: "AI Problem Solver",
+    href: "/dashboard/gyanmitra-ai",
+    label: "GyanMitra AI",
     icon: BrainCircuit,
   },
 ];
