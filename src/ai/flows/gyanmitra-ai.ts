@@ -47,9 +47,8 @@ const gyanmitraAiFlow = ai.defineFlow(
     stream: true,
   },
   async (input) => {
-    const { stream } = ai.generateStream({
-        prompt: {
-          text: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
+    const { stream } = await ai.generate({
+        prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
     
     Analyze the student's profile:
     - Engagement Level: {{{engagementLevel}}} (0=low, 1=high)
@@ -76,12 +75,12 @@ const gyanmitraAiFlow = ai.defineFlow(
     
     Your response MUST be only the markdown text of the answer. Do not wrap it in JSON.
     `,
-          data: input,
-        },
+        data: input,
         history: input.history?.map(m => ({
             role: m.role === 'assistant' ? 'model' : m.role,
             content: [{text: m.content}]
-        }))
+        })),
+        stream: true,
       });
       
       const outputStream = new ReadableStream({
