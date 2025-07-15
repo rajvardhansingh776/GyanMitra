@@ -28,14 +28,15 @@ type SettingsState = {
   pushNotifications: boolean;
 };
 
-const defaultSettings: SettingsState = {
+// Represents the settings as they are saved in a database.
+const savedSettings: SettingsState = {
   emailNotifications: true,
   pushNotifications: false,
 };
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<SettingsState>(defaultSettings);
+  const [settings, setSettings] = useState<SettingsState>(savedSettings);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -43,12 +44,14 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Load saved settings on initial render
+    setSettings(savedSettings);
   }, []);
 
   useEffect(() => {
-    // Check if current settings are different from default settings
+    // Check if current settings are different from saved settings
     const hasChanged =
-      JSON.stringify(settings) !== JSON.stringify(defaultSettings);
+      JSON.stringify(settings) !== JSON.stringify(savedSettings);
     setIsDirty(hasChanged);
   }, [settings]);
 
@@ -61,24 +64,26 @@ export default function SettingsPage() {
 
   const handleSaveChanges = () => {
     setIsLoading(true);
-    // Simulate API call
+    // Simulate API call to save settings
     setTimeout(() => {
+      // In a real app, you'd update your backend here.
+      // For this simulation, we'll update our 'savedSettings' object.
+      Object.assign(savedSettings, settings);
+      
       setIsLoading(false);
-      setIsDirty(false); // Assuming save is successful
+      setIsDirty(false); 
       toast({
         title: "Settings Saved",
         description: "Your new settings have been applied.",
       });
-      // Here you would typically update the "default" settings to the new saved state
-      // For this simulation, we'll just reset the dirty state.
     }, 1500);
   };
   
   const handleReset = () => {
-    setSettings(defaultSettings);
+    setSettings(savedSettings);
     toast({
       title: "Settings Reset",
-      description: "All settings have been restored to their defaults.",
+      description: "Your settings have been restored to the last saved state.",
     });
   };
 
@@ -114,6 +119,7 @@ export default function SettingsPage() {
                   onCheckedChange={(checked) =>
                     handleSettingChange("emailNotifications", checked)
                   }
+                  disabled={isLoading}
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
@@ -129,6 +135,7 @@ export default function SettingsPage() {
                   onCheckedChange={(checked) =>
                     handleSettingChange("pushNotifications", checked)
                   }
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -153,6 +160,7 @@ export default function SettingsPage() {
                   <Select
                     value={theme}
                     onValueChange={setTheme}
+                    disabled={isLoading}
                   >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select theme" />
@@ -168,8 +176,8 @@ export default function SettingsPage() {
             </div>
           </div>
            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
-                Reset to Defaults
+              <Button variant="ghost" onClick={handleReset} disabled={isLoading || !isDirty}>
+                Reset
               </Button>
               <Button onClick={handleSaveChanges} disabled={!isDirty || isLoading}>
                 {isLoading && (
