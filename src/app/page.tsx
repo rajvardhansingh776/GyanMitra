@@ -33,7 +33,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                defaultValue="raj.doe@example.com"
+                defaultValue="raj.singh@example.com"
                 required
               />
             </div>
@@ -61,5 +61,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
-    
