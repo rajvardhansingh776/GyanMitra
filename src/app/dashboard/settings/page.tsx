@@ -77,17 +77,14 @@ export default function SettingsPage() {
   };
   
   const handleReset = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setSettings(savedSettingsData);
-      setTheme(savedThemeValue); 
-      setIsLoading(false);
-      toast({
-        title: "Settings Reset",
-        description: "Your settings have been restored to the last saved state.",
-        variant: 'default'
-      });
-    }, 500);
+    // No need to set loading state for a quick reset
+    setSettings(savedSettingsData);
+    setTheme(savedThemeValue); 
+    toast({
+      title: "Settings Reset",
+      description: "Your settings have been restored to the last saved state.",
+      variant: 'default'
+    });
   };
   
   if (!mounted) {
@@ -96,14 +93,34 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <Skeleton className="h-8 w-32" />
+              <Settings className="h-8 w-8 text-primary" />
+              <CardTitle>Settings</CardTitle>
             </div>
-             <Skeleton className="h-4 w-64" />
+             <CardDescription>
+                Manage your account and notification settings.
+             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-             <Skeleton className="h-24 w-full" />
-             <Skeleton className="h-24 w-full" />
+             <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Notifications
+                </h3>
+                <div className="space-y-4 pl-7">
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                </div>
+             </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                    <Palette className="h-5 w-5" />
+                    Appearance
+                </h3>
+                <div className="space-y-4 pl-7">
+                    <Skeleton className="h-20 w-full" />
+                </div>
+              </div>
+
              <div className="flex justify-end gap-2">
                 <Skeleton className="h-10 w-20" />
                 <Skeleton className="h-10 w-32" />
@@ -201,7 +218,7 @@ export default function SettingsPage() {
             </div>
           </div>
            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
+              <Button variant="ghost" onClick={handleReset} disabled={isLoading || !isDirty}>
                 Reset
               </Button>
               <Button onClick={handleSaveChanges} disabled={!isDirty || isLoading}>
