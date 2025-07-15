@@ -21,7 +21,7 @@ export default function LoginPage() {
               <BrainCircuit className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Welcome to MindBloom</CardTitle>
+          <CardTitle className="text-2xl text-center">Welcome to GyanMitra</CardTitle>
           <CardDescription className="text-center">
             Enter your credentials to access your learning dashboard.
           </CardDescription>
