@@ -110,6 +110,10 @@ export default function GyanMitraAiPage() {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
       if (!response.body) {
         throw new Error("The response body is empty.");
       }

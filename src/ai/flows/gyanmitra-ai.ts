@@ -54,14 +54,14 @@ export type GyanMitraAiOutput = z.infer<typeof GyanMitraAiOutputSchema>;
 
 
 export async function gyanmitraAiStream(input: GyanMitraAiInput) {
-  const { stream } = await gyanmitraAiPrompt(input);
+  const { stream } = gyanmitraAiPrompt(input);
   return stream;
 }
 
 const gyanmitraAiPrompt = ai.definePrompt({
   name: 'gyanmitraAiPrompt',
   input: {schema: GyanMitraAiInputSchema},
-  output: {schema: z.string().json().describe(GyanMitraAiOutputSchema)},
+  output: {schema: GyanMitraAiOutputSchema},
   prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
 
 Analyze the student's profile:
