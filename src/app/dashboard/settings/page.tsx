@@ -45,12 +45,22 @@ export default function SettingsPage() {
   
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  
+  const [selectedTheme, setSelectedTheme] = useState(savedThemeValue);
 
   useEffect(() => {
     setMounted(true);
     // On mount, restore settings from our "saved" data
     setSettings(savedSettingsData);
+    setSelectedTheme(savedThemeValue);
   }, []);
+  
+  useEffect(() => {
+    if(mounted) {
+      setSelectedTheme(theme || 'system');
+    }
+  }, [theme, mounted]);
+
 
   const handleSettingChange = <K extends keyof SettingsState>(
     key: K,
@@ -66,7 +76,8 @@ export default function SettingsPage() {
       // In a real app, you'd update your backend here.
       // For this simulation, we'll update our 'saved' data objects.
       Object.assign(savedSettingsData, settings);
-      savedThemeValue = theme || 'system';
+      savedThemeValue = selectedTheme;
+      setTheme(selectedTheme);
       
       setIsLoading(false);
       toast({
@@ -79,6 +90,7 @@ export default function SettingsPage() {
   const handleReset = () => {
     // No need to set loading state for a quick reset
     setSettings(savedSettingsData);
+    setSelectedTheme(savedThemeValue); 
     setTheme(savedThemeValue); 
     toast({
       title: "Settings Reset",
@@ -131,7 +143,7 @@ export default function SettingsPage() {
     );
   }
 
-  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettingsData) || theme !== savedThemeValue;
+  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettingsData) || selectedTheme !== savedThemeValue;
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
@@ -201,8 +213,8 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Select
-                  value={theme}
-                  onValueChange={setTheme}
+                  value={selectedTheme}
+                  onValueChange={setSelectedTheme}
                   disabled={isLoading}
                 >
                   <SelectTrigger className="w-[180px]">
@@ -218,7 +230,7 @@ export default function SettingsPage() {
             </div>
           </div>
            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleReset} disabled={isLoading || !isDirty}>
+              <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
                 Reset
               </Button>
               <Button onClick={handleSaveChanges} disabled={!isDirty || isLoading}>
