@@ -55,7 +55,6 @@ type Message = {
   role: "user" | "assistant";
   content: string;
   explanation?: string;
-  difficultyLevel?: string;
 };
 
 export default function GyanMitraAiPage() {
@@ -126,7 +125,6 @@ export default function GyanMitraAiPage() {
         role: "assistant",
         content: "",
         explanation: "",
-        difficultyLevel: response.difficultyLevel,
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
@@ -173,13 +171,6 @@ export default function GyanMitraAiPage() {
         form.handleSubmit(onSubmit)();
       }
     }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied to clipboard!",
-    });
   };
 
   return (
@@ -281,7 +272,7 @@ export default function GyanMitraAiPage() {
                         className={cn(
                           "max-w-xl p-4 rounded-lg",
                           message.role === "assistant"
-                            ? "bg-muted"
+                            ? "bg-card border shadow-sm"
                             : "bg-primary text-primary-foreground"
                         )}
                       >
@@ -289,8 +280,9 @@ export default function GyanMitraAiPage() {
                            <ReactMarkdown>{message.content}</ReactMarkdown>
                         </div>
                         {message.explanation && (
-                          <div className="mt-4 pt-2 border-t">
-                            <h3 className="font-semibold text-xs mb-1">
+                          <div className="mt-4 pt-4 border-t">
+                            <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                              <Sparkles className="h-4 w-4 text-primary" />
                               Explanation
                             </h3>
                              <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -372,3 +364,5 @@ export default function GyanMitraAiPage() {
     </div>
   );
 }
+
+    
