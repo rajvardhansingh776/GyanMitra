@@ -60,7 +60,7 @@ export async function gyanmitraAi(
 }
 
 export async function gyanmitraAiStream(input: GyanMitraAiInput) {
-  const { stream } = await gyanmitraAiPrompt(input);
+  const { stream } = gyanmitraAiPrompt(input);
   return stream;
 }
 
