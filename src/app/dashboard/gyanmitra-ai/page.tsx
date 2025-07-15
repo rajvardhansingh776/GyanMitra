@@ -98,7 +98,7 @@ export default function GyanMitraAiPage() {
           clearInterval(interval);
           resolve();
         }
-      }, 50);
+      }, 10);
     });
   };
 
@@ -364,5 +364,3 @@ export default function GyanMitraAiPage() {
     </div>
   );
 }
-
-    
