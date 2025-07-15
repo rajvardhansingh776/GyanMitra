@@ -3,7 +3,7 @@
 /**
  * @fileOverview An AI problem solver that adjusts difficulty based on student engagement and past performance.
  *
- * - gyanmitraAi - A function that provides AI-driven problem-solving assistance.
+ * - gyanmitraAiStream - A function that provides AI-driven problem-solving assistance as a stream.
  * - GyanMitraAiInput - The input type for the gyanmitraAi function.
  * - GyanMitraAiOutput - The return type for the gyanmitraAi function.
  */
@@ -52,12 +52,6 @@ const GyanMitraAiOutputSchema = z.object({
 });
 export type GyanMitraAiOutput = z.infer<typeof GyanMitraAiOutputSchema>;
 
-export async function gyanmitraAi(
-  input: GyanMitraAiInput
-): Promise<GyanMitraAiOutput> {
-  const { output } = await gyanmitraAiPrompt(input);
-  return output!;
-}
 
 export async function gyanmitraAiStream(input: GyanMitraAiInput) {
   const { stream } = gyanmitraAiPrompt(input);
