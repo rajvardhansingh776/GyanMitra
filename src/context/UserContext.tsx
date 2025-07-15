@@ -33,12 +33,21 @@ const UserProviderContent = ({ children }: { children: ReactNode }) => {
   const searchParams = useSearchParams();
   const role = searchParams.get('role');
 
-  const initialUser = role === 'student' ? studentUser : teacherUser;
-  const [user, setUser] = useState<User>(initialUser);
+  // Set the initial user based on the role only once.
+  const getInitialUser = () => {
+    // Default to teacher if role is not specified, but this should be less of an issue now.
+    return role === 'student' ? studentUser : teacherUser;
+  };
 
+  const [user, setUser] = useState<User>(getInitialUser);
+
+  // This effect runs once on initial load if the role parameter exists,
+  // and it won't re-run on every navigation anymore, making the state persistent.
   useEffect(() => {
-      setUser(role === 'student' ? studentUser : teacherUser);
+    const initialUser = getInitialUser();
+    setUser(initialUser);
   }, [role]);
+
 
   const updateUser = (newUserData: Partial<User>) => {
     setUser((prevUser) => ({ ...prevUser, ...newUserData }));

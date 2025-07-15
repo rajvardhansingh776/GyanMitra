@@ -51,16 +51,11 @@ export function DashboardNav() {
     }
   };
 
-  const getHref = (href: string) => {
-    const role = isTeacher ? 'teacher' : 'student';
-    return `${href}?role=${role}`;
-  }
-
   return (
     <SidebarMenu>
       {currentNavItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={getHref(item.href)} onClick={handleLinkClick}>
+          <Link href={item.href} onClick={handleLinkClick}>
             <SidebarMenuButton
               isActive={pathname === item.href}
               tooltip={item.label}
