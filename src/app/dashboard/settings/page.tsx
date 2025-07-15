@@ -36,7 +36,7 @@ const savedSettingsData: SettingsState = {
 };
 
 // Represents the saved theme. In a real app, this would also come from a database.
-let savedThemeData = "system";
+let savedThemeValue = "system";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -47,23 +47,23 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Separate state to track the "saved" theme state.
-  const [savedTheme, setSavedTheme] = useState(savedThemeData);
+  // This state tracks the chosen theme setting ('light', 'dark', 'system')
+  const [selectedTheme, setSelectedTheme] = useState(savedThemeValue);
 
   useEffect(() => {
     setMounted(true);
-    // When component mounts, sync the saved theme state
-    setSavedTheme(savedThemeData); 
-  }, []);
+    // When component mounts, sync the theme selection state
+    setSelectedTheme(theme || 'system');
+  }, [theme]);
 
   useEffect(() => {
     if (!mounted) return;
     // Check if current settings (including theme) are different from saved settings
     const notificationsChanged =
       JSON.stringify(settings) !== JSON.stringify(savedSettingsData);
-    const themeChanged = theme !== savedTheme;
+    const themeChanged = selectedTheme !== savedThemeValue;
     setIsDirty(notificationsChanged || themeChanged);
-  }, [settings, theme, mounted, savedTheme]);
+  }, [settings, selectedTheme, mounted]);
 
   const handleSettingChange = <K extends keyof SettingsState>(
     key: K,
@@ -72,6 +72,10 @@ export default function SettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleThemeSelectionChange = (value: string) => {
+    setSelectedTheme(value);
+  }
+
   const handleSaveChanges = () => {
     setIsLoading(true);
     // Simulate API call to save settings
@@ -79,8 +83,8 @@ export default function SettingsPage() {
       // In a real app, you'd update your backend here.
       // For this simulation, we'll update our 'saved' data objects.
       Object.assign(savedSettingsData, settings);
-      savedThemeData = theme!;
-      setSavedTheme(theme!);
+      savedThemeValue = selectedTheme;
+      setTheme(selectedTheme); // Apply the theme globally
       
       setIsLoading(false);
       setIsDirty(false); 
@@ -93,10 +97,12 @@ export default function SettingsPage() {
   
   const handleReset = () => {
     setSettings(savedSettingsData);
-    setTheme(savedThemeData);
+    setSelectedTheme(savedThemeValue);
+    setTheme(savedThemeValue);
     toast({
       title: "Settings Reset",
       description: "Your settings have been restored to the last saved state.",
+      variant: 'default'
     });
   };
 
@@ -171,8 +177,8 @@ export default function SettingsPage() {
                   <Skeleton className="w-[180px] h-10" />
                 ) : (
                   <Select
-                    value={theme}
-                    onValueChange={setTheme}
+                    value={selectedTheme}
+                    onValueChange={handleThemeSelectionChange}
                     disabled={isLoading}
                   >
                     <SelectTrigger className="w-[180px]">
