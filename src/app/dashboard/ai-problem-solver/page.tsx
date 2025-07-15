@@ -37,6 +37,7 @@ import { aiProblemSolver } from "@/ai/flows/ai-problem-solver";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 
 const formSchema = z.object({
   question: z
@@ -226,7 +227,7 @@ export default function AiProblemSolverPage() {
                     <div>
                       <h3 className="font-semibold mb-2">Solution</h3>
                       <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/50 p-4 rounded-lg relative">
-                        <p>{result.solution}</p>
+                        <ReactMarkdown>{result.solution}</ReactMarkdown>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -249,7 +250,7 @@ export default function AiProblemSolverPage() {
                       <div>
                         <h3 className="font-semibold mb-2">Explanation</h3>
                         <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <p>{result.explanation}</p>
+                           <ReactMarkdown>{result.explanation}</ReactMarkdown>
                         </div>
                       </div>
                     )}

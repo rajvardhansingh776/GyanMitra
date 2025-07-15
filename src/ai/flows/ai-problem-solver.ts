@@ -27,7 +27,7 @@ const AiProblemSolverInputSchema = z.object({
 export type AiProblemSolverInput = z.infer<typeof AiProblemSolverInputSchema>;
 
 const AiProblemSolverOutputSchema = z.object({
-  solution: z.string().describe('The AI-generated solution to the problem.'),
+  solution: z.string().describe('The AI-generated solution to the problem. This should be formatted using Markdown.'),
   difficultyLevel: z
     .string()
     .describe(
@@ -37,7 +37,7 @@ const AiProblemSolverOutputSchema = z.object({
     .string()
     .optional()
     .describe(
-      'A direct, step-by-step explanation of how the AI arrived at the solution. This should only be provided for problem-solving questions.'
+      'A direct, step-by-step explanation of how the AI arrived at the solution. This should only be provided for problem-solving questions. This should be formatted using Markdown.'
     ),
 });
 export type AiProblemSolverOutput = z.infer<typeof AiProblemSolverOutputSchema>;
@@ -64,13 +64,14 @@ Based on this profile and the question, generate a response.
 
 RULES:
 1.  **Analyze the Question Type**: First, determine if the question is a factual query (e.g., "What is photosynthesis?") or a problem-solving question (e.g., "Solve for x in 2x+5=15").
-2.  **Solution**: Provide a direct, accurate answer to the question. Do not add conversational fluff or introductory phrases.
-3.  **Explanation**:
+2.  **Formatting**: Format your response using Markdown. Use code blocks for any code snippets, math equations, or commands. Use lists for steps.
+3.  **Solution**: Provide a direct, accurate answer to the question. Do not add conversational fluff or introductory phrases.
+4.  **Explanation**:
     -   If the question is a **factual query**, DO NOT provide an explanation. The explanation field must be omitted.
     -   If the question is a **problem-solving question**, provide a step-by-step breakdown of how you reached the solution.
     -   For a student with **low engagement/performance**, the explanation should be more foundational and detailed.
     -   For a student with **high engagement/performance**, the explanation can be more advanced and succinct, focusing on key concepts.
-4.  **Difficulty Level**: Assess the complexity of your own solution (e.g., "Beginner", "Intermediate", "Advanced").
+5.  **Difficulty Level**: Assess the complexity of your own solution (e.g., "Beginner", "Intermediate", "Advanced").
 
 Your response must be structured to directly match the output schema.
 `,
