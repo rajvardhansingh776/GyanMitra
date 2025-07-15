@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { User } from "lucide-react";
+import { User, ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
+import { useRouter } from "next/navigation";
 
 const profileFormSchema = z.object({
   fullName: z
@@ -43,6 +44,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const { user, updateUser } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -91,6 +93,13 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4" />
+          <span className="sr-only">Back</span>
+        </Button>
+        <h1 className="text-xl font-semibold">My Profile</h1>
+      </div>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -18,11 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Settings, Palette, Loader2 } from "lucide-react";
+import { Bell, Settings, Palette, Loader2, ArrowLeft } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 
 type SettingsState = {
   emailNotifications: boolean;
@@ -49,14 +49,20 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<SettingsState>(savedSettingsData);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+
+  const [currentTheme, setCurrentTheme] = useState("system");
   
   useEffect(() => {
     setMounted(true);
     // On mount, restore settings from our "saved" data
     setSettings(savedSettingsData);
+    setCurrentTheme(savedThemeValue);
   }, []);
+
+  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettingsData) || currentTheme !== savedThemeValue;
   
   const handleSettingChange = <K extends keyof SettingsState>(
     key: K,
@@ -72,7 +78,8 @@ export default function SettingsPage() {
       // In a real app, you'd update your backend here.
       // For this simulation, we'll update our 'saved' data objects.
       Object.assign(savedSettingsData, settings);
-      savedThemeValue = theme || 'system';
+      savedThemeValue = currentTheme;
+      setTheme(currentTheme);
       
       setIsLoading(false);
       toast({
@@ -84,7 +91,8 @@ export default function SettingsPage() {
   
   const handleReset = () => {
     setSettings(defaultSettingsData);
-    setTheme(defaultThemeValue); 
+    setCurrentTheme(defaultThemeValue);
+    setTheme(defaultThemeValue);
     toast({
       title: "Settings Reset",
       description: "Your settings have been reset to their defaults.",
@@ -136,10 +144,15 @@ export default function SettingsPage() {
     );
   }
 
-  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettingsData) || (theme || 'system') !== savedThemeValue;
-
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+       <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4" />
+          <span className="sr-only">Back</span>
+        </Button>
+        <h1 className="text-xl font-semibold">Settings</h1>
+      </div>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
@@ -206,8 +219,8 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Select
-                  value={theme}
-                  onValueChange={setTheme}
+                  value={currentTheme}
+                  onValueChange={setCurrentTheme}
                   disabled={isLoading}
                 >
                   <SelectTrigger className="w-[180px]">

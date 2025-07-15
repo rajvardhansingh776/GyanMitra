@@ -18,9 +18,11 @@ import {
   Loader2,
   Move,
   Smile,
+  ArrowLeft,
 } from "lucide-react";
 import React, { useState } from "react";
 import type { AnalyzeStudentEngagementOutput } from "@/ai/flows/analyze-student-engagement";
+import { useRouter } from "next/navigation";
 
 const mockAnalysis: AnalyzeStudentEngagementOutput = {
   engagementLevel: 78,
@@ -38,6 +40,7 @@ export default function EngagementAnalysisPage() {
   const [analysis, setAnalysis] =
     useState<AnalyzeStudentEngagementOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleAnalysis = () => {
     setIsLoading(true);
@@ -70,15 +73,24 @@ export default function EngagementAnalysisPage() {
 
   return (
     <div className="container mx-auto py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4" />
+          <span className="sr-only">Back</span>
+        </Button>
+        <div className="flex flex-col items-start">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Student Engagement Analysis
+          </h1>
+          <p className="text-muted-foreground">
+            Use our AI to analyze a student's video session and gain insights
+            into their engagement level.
+          </p>
+        </div>
+      </div>
+
       <div className="flex flex-col items-center text-center mb-8">
         <HeartPulse className="h-16 w-16 text-primary mb-4" />
-        <h1 className="text-4xl font-bold tracking-tight">
-          Student Engagement Analysis
-        </h1>
-        <p className="mt-2 max-w-2xl text-lg text-muted-foreground">
-          Use our AI to analyze a student's video session and gain insights
-          into their engagement level.
-        </p>
         <Button onClick={handleAnalysis} disabled={isLoading} className="mt-6">
           {isLoading ? (
             <>
