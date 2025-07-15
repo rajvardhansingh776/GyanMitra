@@ -75,6 +75,7 @@ const gyanmitraAiFlow = ai.defineFlow(
     
     Your response MUST be only the markdown text of the answer. Do not wrap it in JSON.
     `,
+        history: input.history?.map(m => ({...m, role: m.role === 'assistant' ? 'model' : 'user'})) || [],
         data: input,
         stream: true,
       });
