@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,7 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Bot,
   BrainCircuit,
@@ -31,6 +30,7 @@ import {
   Sparkles,
   ClipboardCheck,
   ArrowLeft,
+  User,
 } from "lucide-react";
 import type { AiProblemSolverOutput } from "@/ai/flows/ai-problem-solver";
 import { aiProblemSolver } from "@/ai/flows/ai-problem-solver";
@@ -38,6 +38,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   question: z
@@ -48,14 +51,19 @@ const formSchema = z.object({
   performance: z.number().min(0).max(1),
 });
 
-export default function AiProblemSolverPage() {
-  const [result, setResult] = useState<AiProblemSolverOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [streamedSolution, setStreamedSolution] = useState("");
-  const [streamedExplanation, setStreamedExplanation] = useState("");
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+  explanation?: string;
+  difficultyLevel?: string;
+};
 
+export default function AiProblemSolverPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,43 +74,88 @@ export default function AiProblemSolverPage() {
     },
   });
 
-  const streamText = (text: string, setter: (text: string) => void) => {
-    return new Promise<void>((resolve) => {
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
+
+  const streamText = (
+    text: string,
+    onChunk: (chunk: string) => void
+  ): Promise<void> => {
+    return new Promise((resolve) => {
       let index = 0;
-      setter("");
       const words = text.split(" ");
       const interval = setInterval(() => {
         if (index < words.length) {
-          setter((prev) => prev + (index > 0 ? " " : "") + words[index]);
+          const chunk = (index > 0 ? " " : "") + words[index];
+          onChunk(chunk);
           index++;
         } else {
           clearInterval(interval);
           resolve();
         }
-      }, 50); // Adjust speed of typing here
+      }, 50);
     });
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const userMessage: Message = { role: "user", content: values.question };
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
-    setResult(null);
-    setStreamedSolution("");
-    setStreamedExplanation("");
+    form.reset({ ...values, question: "" });
+
+    const history = messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
 
     try {
       const response = await aiProblemSolver({
         question: values.question,
         engagementLevel: values.engagement,
         pastPerformance: values.performance,
+        history: history,
       });
-      setResult(response);
 
-      await streamText(response.solution, setStreamedSolution);
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        explanation: "",
+        difficultyLevel: response.difficultyLevel,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      await streamText(response.solution, (chunk) => {
+        setMessages((prev) =>
+          prev.map((msg, i) =>
+            i === prev.length - 1 ? { ...msg, content: msg.content + chunk } : msg
+          )
+        );
+      });
+
       if (response.explanation) {
-        await streamText(response.explanation, setStreamedExplanation);
+        await streamText(response.explanation, (chunk) => {
+          setMessages((prev) =>
+            prev.map((msg, i) =>
+              i === prev.length - 1
+                ? { ...msg, explanation: (msg.explanation || "") + chunk }
+                : msg
+            )
+          );
+        });
       }
     } catch (error) {
       console.error("Error solving problem:", error);
+      const errorMessage: Message = {
+        role: "assistant",
+        content: "I'm sorry, I encountered an error. Please try again.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -116,7 +169,9 @@ export default function AiProblemSolverPage() {
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey && !isLoading) {
       event.preventDefault();
-      form.handleSubmit(onSubmit)();
+      if (form.getValues("question").trim()) {
+        form.handleSubmit(onSubmit)();
+      }
     }
   };
 
@@ -124,7 +179,6 @@ export default function AiProblemSolverPage() {
     navigator.clipboard.writeText(text);
     toast({
       title: "Copied to clipboard!",
-      description: "The solution has been copied.",
     });
   };
 
@@ -137,43 +191,21 @@ export default function AiProblemSolverPage() {
         </Button>
         <h1 className="text-xl font-semibold">AI Problem Solver</h1>
       </div>
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-8 h-[calc(100vh-12rem)]">
         <div className="lg:col-span-1">
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BrainCircuit className="h-6 w-6 text-primary" />
-                AI Problem Solver
+                Student Profile
               </CardTitle>
               <CardDescription>
-                Get help with any problem. The AI will adjust to your learning
-                pace.
+                Adjust these sliders to simulate different student contexts.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
-                >
-                  <FormField
-                    control={form.control}
-                    name="question"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Question</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="e.g., How do I solve 2x + 5 = 15?"
-                            rows={5}
-                            {...field}
-                            onKeyDown={handleKeyDown}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <form className="space-y-6">
                   <FormField
                     control={form.control}
                     name="engagement"
@@ -188,9 +220,6 @@ export default function AiProblemSolverPage() {
                             onValueChange={(value) => field.onChange(value[0])}
                           />
                         </FormControl>
-                        <FormDescription>
-                          Simulated based on your recent activity.
-                        </FormDescription>
                       </FormItem>
                     )}
                   />
@@ -208,95 +237,144 @@ export default function AiProblemSolverPage() {
                             onValueChange={(value) => field.onChange(value[0])}
                           />
                         </FormControl>
-                        <FormDescription>
-                          Simulated based on your problem-solving history.
-                        </FormDescription>
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Thinking...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Get Help
-                      </>
-                    )}
-                  </Button>
                 </form>
               </Form>
             </CardContent>
           </Card>
         </div>
         <div className="lg:col-span-2">
-          <div className="sticky top-24">
-            <Card className="min-h-[60vh]">
-              <CardHeader>
-                <CardTitle>AI Generated Solution</CardTitle>
-                <CardDescription>
-                  Here's a step-by-step solution tailored for you.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading && !result && (
-                  <div className="space-y-4">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-4 w-1/4 mt-4" />
-                    <Skeleton className="h-20 w-full" />
-                  </div>
-                )}
-                {result && (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="font-semibold mb-2">Solution</h3>
-                      <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/50 p-4 rounded-lg relative">
-                        <ReactMarkdown>{streamedSolution}</ReactMarkdown>
-                        {streamedSolution === result.solution && (
-                           <Button
-                           variant="ghost"
-                           size="icon"
-                           className="absolute top-2 right-2 h-7 w-7"
-                           onClick={() => copyToClipboard(result.solution)}
-                         >
-                           <ClipboardCheck className="h-4 w-4" />
-                         </Button>
+          <Card className="h-full flex flex-col">
+            <CardHeader>
+              <CardTitle>Conversation</CardTitle>
+              <CardDescription>
+                Ask a question to start. Use Shift+Enter for new lines.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
+              <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
+                <div className="space-y-6">
+                  {messages.length === 0 && !isLoading && (
+                    <div className="flex flex-col items-center justify-center text-center h-full text-muted-foreground pt-16">
+                      <Bot className="h-16 w-16 mb-4" />
+                      <p>Your conversation will appear here.</p>
+                    </div>
+                  )}
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex items-start gap-4",
+                        message.role === "user" && "justify-end"
+                      )}
+                    >
+                      {message.role === "assistant" && (
+                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                          <AvatarFallback>
+                            <Bot className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div
+                        className={cn(
+                          "max-w-xl p-4 rounded-lg",
+                          message.role === "assistant"
+                            ? "bg-muted"
+                            : "bg-primary text-primary-foreground"
+                        )}
+                      >
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                           <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
+                        {message.difficultyLevel && (
+                          <div className="mt-4 pt-2 border-t">
+                            <h3 className="font-semibold text-xs mb-1">
+                              Difficulty Level
+                            </h3>
+                            <p className="text-xs">{message.difficultyLevel}</p>
+                          </div>
+                        )}
+                        {message.explanation && (
+                          <div className="mt-4 pt-2 border-t">
+                            <h3 className="font-semibold text-xs mb-1">
+                              Explanation
+                            </h3>
+                             <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown>{message.explanation}</ReactMarkdown>
+                            </div>
+                          </div>
                         )}
                       </div>
+                      {message.role === "user" && (
+                         <Avatar className="h-8 w-8">
+                           <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+                         </Avatar>
+                      )}
                     </div>
-                    {result.difficultyLevel && (
-                      <div>
-                        <h3 className="font-semibold mb-2">Difficulty Level</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {result.difficultyLevel}
-                        </p>
-                      </div>
-                    )}
-                    {result.explanation && (
-                      <div>
-                        <h3 className="font-semibold mb-2">Explanation</h3>
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                           <ReactMarkdown>{streamedExplanation}</ReactMarkdown>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {!isLoading && !result && (
-                  <div className="flex flex-col items-center justify-center text-center h-80">
-                    <Bot className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                    <p className="text-muted-foreground">
-                      Your solution will appear here.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                  ))}
+                  {isLoading && messages[messages.length - 1]?.role === "user" && (
+                     <div className="flex items-start gap-4">
+                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                           <AvatarFallback>
+                             <Bot className="h-5 w-5" />
+                           </AvatarFallback>
+                         </Avatar>
+                       <div className="max-w-xl p-4 rounded-lg bg-muted">
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm text-muted-foreground">Thinking...</span>
+                          </div>
+                       </div>
+                     </div>
+                  )}
+                </div>
+              </ScrollArea>
+              <div className="mt-auto pt-4">
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="relative"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="question"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="e.g., How do I solve 2x + 5 = 15?"
+                              rows={2}
+                              {...field}
+                              onKeyDown={handleKeyDown}
+                              className="pr-20"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="absolute bottom-2 right-2"
+                      disabled={isLoading || !form.getValues("question").trim()}
+                      size="sm"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending
+                        </>
+                      ) : (
+                        "Send"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
