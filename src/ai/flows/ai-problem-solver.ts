@@ -35,8 +35,9 @@ const AiProblemSolverOutputSchema = z.object({
     ),
   explanation: z
     .string()
+    .optional()
     .describe(
-      'A direct, step-by-step explanation of how the AI arrived at the solution.'
+      'A direct, step-by-step explanation of how the AI arrived at the solution. This should only be provided for problem-solving questions.'
     ),
 });
 export type AiProblemSolverOutput = z.infer<typeof AiProblemSolverOutputSchema>;
@@ -59,14 +60,17 @@ Analyze the student's profile:
 - Engagement Level: {{{engagementLevel}}} (0=low, 1=high)
 - Past Performance: {{{pastPerformance}}} (0=poor, 1=excellent)
 
-Based on this profile, generate a response.
+Based on this profile and the question, generate a response.
 
 RULES:
-1.  **Solution**: Provide a direct, accurate answer to the question. Do not add conversational fluff or introductory phrases.
-2.  **Difficulty Level**: Assess the complexity of your own solution (e.g., "Beginner", "Intermediate", "Advanced").
-3.  **Explanation**: Give a step-by-step breakdown of how you reached the solution. Be concise and clear.
+1.  **Analyze the Question Type**: First, determine if the question is a factual query (e.g., "What is photosynthesis?") or a problem-solving question (e.g., "Solve for x in 2x+5=15").
+2.  **Solution**: Provide a direct, accurate answer to the question. Do not add conversational fluff or introductory phrases.
+3.  **Explanation**:
+    -   If the question is a **factual query**, DO NOT provide an explanation. The explanation field must be omitted.
+    -   If the question is a **problem-solving question**, provide a step-by-step breakdown of how you reached the solution.
     -   For a student with **low engagement/performance**, the explanation should be more foundational and detailed.
     -   For a student with **high engagement/performance**, the explanation can be more advanced and succinct, focusing on key concepts.
+4.  **Difficulty Level**: Assess the complexity of your own solution (e.g., "Beginner", "Intermediate", "Advanced").
 
 Your response must be structured to directly match the output schema.
 `,

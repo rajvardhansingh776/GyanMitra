@@ -243,12 +243,14 @@ export default function AiProblemSolverPage() {
                         {result.difficultyLevel}
                       </p>
                     </div>
-                    <div>
-                      <h3 className="font-semibold mb-2">Explanation</h3>
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <p>{result.explanation}</p>
+                    {result.explanation && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Explanation</h3>
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <p>{result.explanation}</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
                 {!isLoading && !result && (
