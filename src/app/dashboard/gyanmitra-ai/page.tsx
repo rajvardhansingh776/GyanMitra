@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -202,8 +203,8 @@ export default function GyanMitraAiPage() {
         </Button>
         <h1 className="text-xl font-semibold">GyanMitra AI</h1>
       </div>
-      <div className="grid lg:grid-cols-3 gap-8 h-[calc(100vh-12rem)]">
-        <div className="lg:col-span-1">
+      <div className="grid md:grid-cols-3 gap-8 md:h-[calc(100vh-12rem)]">
+        <div className="md:col-span-1">
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -256,8 +257,8 @@ export default function GyanMitraAiPage() {
             </CardContent>
           </Card>
         </div>
-        <div className="lg:col-span-2">
-          <Card className="h-full flex flex-col">
+        <div className="md:col-span-2">
+          <Card className="h-full flex flex-col min-h-[70vh] md:min-h-0">
             <CardHeader>
               <CardTitle>Conversation</CardTitle>
               <CardDescription>
@@ -374,3 +375,5 @@ export default function GyanMitraAiPage() {
     </div>
   );
 }
+
+    
