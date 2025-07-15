@@ -43,3 +43,15 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# Dependencies
+/node_modules
+
+# Firebase
+.firebase/
+firebase-debug.log*
+*.rules
+
+# IMPORTANT: Add the file that contains your Firebase config keys!
+# For example, if your keys are in a file named firebase-config.js:
+firebase-config.js
