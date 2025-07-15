@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import type { AiProblemSolverOutput } from "@/ai/flows/ai-problem-solver";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   question: z
