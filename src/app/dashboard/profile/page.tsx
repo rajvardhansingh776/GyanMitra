@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 
@@ -33,6 +33,7 @@ const profileFormSchema = z.object({
     .min(2, { message: "Name must be at least 2 characters." })
     .max(50, { message: "Name must not exceed 50 characters." }),
   email: z.string().email(),
+  avatar: z.string(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -41,6 +42,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { user, updateUser } = useUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -66,6 +68,27 @@ export default function ProfilePage() {
     }, 1500);
   }
 
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          variant: "destructive",
+          title: "Image Too Large",
+          description: "Please select an image smaller than 2MB.",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newAvatarUrl = reader.result as string;
+        form.setValue("avatar", newAvatarUrl, { shouldDirty: true });
+        updateUser({ avatar: newAvatarUrl }); // Update context for live preview
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
       <Card>
@@ -90,13 +113,33 @@ export default function ProfilePage() {
                 {user.fullName.split(" ").map(n => n[0]).join("")}
               </AvatarFallback>
             </Avatar>
-            <Button variant="outline">Change Photo</Button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/png, image/jpeg, image/gif"
+              onChange={handlePhotoChange}
+            />
+            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+              Change Photo
+            </Button>
           </div>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
               className="md:col-span-2 grid gap-6"
             >
+               <FormField
+                  control={form.control}
+                  name="avatar"
+                  render={({ field }) => (
+                    <FormItem className="hidden">
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               <FormField
                 control={form.control}
                 name="fullName"
@@ -125,7 +168,7 @@ export default function ProfilePage() {
               />
               <div className="flex justify-end gap-2 mt-4">
                 <Button variant="ghost" type="button" onClick={() => form.reset(user)}>Cancel</Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading || !form.formState.isDirty}>
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
