@@ -4,9 +4,8 @@ name: Deploy Next.js to GitHub Pages
 on:
   push:
     branches:
-      - main # IMPORTANT: Make sure this matches your default branch name (e.g., 'main' or 'master')
+      - main
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -20,18 +19,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use a Node.js version compatible with Next.js 15.3.3. Node.js 20 is a good choice.
+          node-version: '20'
+
+      # --- ADD THIS CACHING STEP ---
+      - name: Cache Node.js modules
+        uses: actions/cache@v4 # Use actions/cache@v4
+        with:
+          path: ~/.npm # The path to cache (npm's cache directory)
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      # --- END CACHING STEP ---
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps # Use --legacy-peer-deps to potentially avoid peer dependency warnings/errors
+        run: npm install --legacy-peer-deps
 
       - name: Build Next.js project
-        run: npm run build # This will run 'next build' and generate the 'out' directory
+        run: npm run build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './out' # Next.js static export outputs to the 'out' directory by default
+          path: './out'
 
       - name: Deploy to GitHub Pages
         id: deployment
