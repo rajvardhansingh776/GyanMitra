@@ -51,9 +51,7 @@ const formSchema = z.object({
 
 type Message = {
   role: "user" | "assistant";
-  content: string; // For user messages, this is the raw text. For assistant, it's the full JSON.
-  solution?: string;
-  explanation?: string;
+  content: string; // For user messages, this is the raw text. For assistant, it's the streamed response.
   isStreaming?: boolean;
 };
 
@@ -84,14 +82,13 @@ export default function GyanMitraAiPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const userMessage: Message = { role: "user", content: values.question };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
     form.reset({ ...values, question: "" });
 
     const history = messages.map((msg) => ({
       role: msg.role,
-      content: msg.role === 'user' ? msg.content : (JSON.parse(msg.content) as GyanMitraAiOutput).solution,
+      content: msg.content,
     }));
 
     // Add a placeholder for the assistant's response
@@ -118,38 +115,28 @@ export default function GyanMitraAiPage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let fullResponse = "";
-
+      
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         const chunk = decoder.decode(value, { stream: true });
-        fullResponse += chunk;
+        
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage.role === 'assistant') {
+            lastMessage.content += chunk;
+            lastMessage.isStreaming = !done;
+          }
+          return newMessages;
+        });
       }
-      
-      const parsedResponse = JSON.parse(fullResponse) as GyanMitraAiOutput;
-      
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: fullResponse, // Store raw JSON
-        solution: parsedResponse.solution,
-        explanation: parsedResponse.explanation,
-        isStreaming: false,
-      };
-
-      // Replace the streaming placeholder with the final message
-      setMessages((prev) => {
-        const updatedMessages = [...prev];
-        updatedMessages[updatedMessages.length - 1] = assistantMessage;
-        return updatedMessages;
-      });
 
     } catch (error) {
       console.error("Error solving problem:", error);
       const errorMessage: Message = {
         role: "assistant",
         content: "I'm sorry, I encountered an error. Please try again.",
-        solution: "I'm sorry, I encountered an error. Please try again.",
       };
       // Replace the placeholder with the error message
       setMessages((prev) => prev.slice(0, -1).concat(errorMessage));
@@ -171,6 +158,44 @@ export default function GyanMitraAiPage() {
       }
     }
   };
+
+  const renderAssistantMessage = (message: Message) => {
+    if (message.isStreaming && message.content === '') {
+       return (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm text-muted-foreground">Thinking...</span>
+          </div>
+       )
+    }
+
+    try {
+      // Try to parse the content. If it succeeds, it's a structured response.
+      const parsed = JSON.parse(message.content) as GyanMitraAiOutput;
+      return (
+        <>
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+             <ReactMarkdown>{parsed.solution || ''}</ReactMarkdown>
+          </div>
+          {parsed.explanation && (
+            <div className="mt-4 pt-4 border-t">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Explanation
+              </h3>
+               <div className="prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown>{parsed.explanation}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+       </>
+      )
+    } catch (e) {
+      // If parsing fails, it's likely an error string or partial stream.
+      return <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></div>;
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -277,28 +302,8 @@ export default function GyanMitraAiPage() {
                       >
                        {message.role === 'user' ? (
                           <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></div>
-                       ) : message.isStreaming ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm text-muted-foreground">Thinking...</span>
-                          </div>
                        ) : (
-                         <>
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
-                               <ReactMarkdown>{message.solution || ''}</ReactMarkdown>
-                            </div>
-                            {message.explanation && (
-                              <div className="mt-4 pt-4 border-t">
-                                <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                                  <Sparkles className="h-4 w-4 text-primary" />
-                                  Explanation
-                                </h3>
-                                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                                  <ReactMarkdown>{message.explanation}</ReactMarkdown>
-                                </div>
-                              </div>
-                            )}
-                         </>
+                         renderAssistantMessage(message)
                        )}
                       </div>
                       {message.role === "user" && (
