@@ -54,14 +54,14 @@ export type GyanMitraAiOutput = z.infer<typeof GyanMitraAiOutputSchema>;
 
 
 export async function gyanmitraAiStream(input: GyanMitraAiInput) {
-  const { stream } = gyanmitraAiPrompt(input);
+  const { stream } = await gyanmitraAiPrompt(input);
   return stream;
 }
 
 const gyanmitraAiPrompt = ai.definePrompt({
   name: 'gyanmitraAiPrompt',
   input: {schema: GyanMitraAiInputSchema},
-  output: {schema: GyanMitraAiOutputSchema},
+  output: {schema: z.string().json().describe(GyanMitraAiOutputSchema)},
   prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
 
 Analyze the student's profile:
@@ -92,6 +92,6 @@ RULES:
 5.  **Difficulty Level**:
     - Assess the complexity of your own solution (e.g., "Beginner", "Intermediate", "Advanced") and provide it ONLY for the **first question** in a conversation. Omit it for all follow-up questions.
 
-Your response must be structured to directly match the output schema.
+Your response MUST be a single, valid JSON object that strictly adheres to the provided output schema. Do not add any text before or after the JSON object.
 `,
 });
