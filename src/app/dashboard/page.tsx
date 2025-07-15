@@ -28,6 +28,7 @@ import {
 import { ArrowUpRight, BookOpen, Clock, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useUser } from "@/context/UserContext";
 
 const engagementData = [
   { day: "Mon", engagement: Math.floor(Math.random() * 50) + 50 },
@@ -47,11 +48,14 @@ const recentSessions = [
 ];
 
 export default function DashboardPage() {
+  const { user } = useUser();
+  const firstName = user.fullName.split(" ")[0];
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Welcome back, Raj!</CardTitle>
+          <CardTitle>Welcome back, {firstName}!</CardTitle>
           <CardDescription>
             Here's a snapshot of your learning journey. Keep up the great work!
           </CardDescription>

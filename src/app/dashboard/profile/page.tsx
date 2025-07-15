@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,8 +23,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useUser } from "@/context/UserContext";
 
 const profileFormSchema = z.object({
   fullName: z
@@ -40,20 +40,24 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function ProfilePage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { user, updateUser } = useUser();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      fullName: "Raj Doe",
-      email: "raj.doe@example.com",
-    },
+    defaultValues: user,
     mode: "onChange",
   });
+  
+  useEffect(() => {
+    form.reset(user);
+  }, [user, form]);
+
 
   function onSubmit(data: ProfileFormValues) {
     setIsLoading(true);
     // Simulate an API call to save the data
     setTimeout(() => {
+      updateUser(data);
       setIsLoading(false);
       toast({
         title: "Profile Updated",
@@ -78,11 +82,13 @@ export default function ProfilePage() {
           <div className="md:col-span-1 flex flex-col items-center text-center gap-4">
             <Avatar className="h-32 w-32 border-4 border-primary/50">
               <AvatarImage
-                src="https://placehold.co/128x128.png"
-                alt="@student"
+                src={user.avatar}
+                alt={user.fullName}
                 data-ai-hint="student avatar"
               />
-              <AvatarFallback>RD</AvatarFallback>
+              <AvatarFallback>
+                {user.fullName.split(" ").map(n => n[0]).join("")}
+              </AvatarFallback>
             </Avatar>
             <Button variant="outline">Change Photo</Button>
           </div>
@@ -118,7 +124,7 @@ export default function ProfilePage() {
                 )}
               />
               <div className="flex justify-end gap-2 mt-4">
-                <Button variant="ghost" type="button" onClick={() => form.reset()}>Cancel</Button>
+                <Button variant="ghost" type="button" onClick={() => form.reset(user)}>Cancel</Button>
                 <Button type="submit" disabled={isLoading}>
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

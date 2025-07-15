@@ -13,28 +13,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
+import { useUser } from "@/context/UserContext";
 
 export function UserNav() {
+  const { user } = useUser();
+  const fallback = user.fullName.split(" ").map(n => n[0]).join("");
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary/50">
             <AvatarImage
-              src="https://placehold.co/40x40.png"
-              alt="@student"
+              src={user.avatar}
+              alt={user.fullName}
               data-ai-hint="student avatar"
             />
-            <AvatarFallback>S</AvatarFallback>
+            <AvatarFallback>{fallback}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Raj Doe</p>
+            <p className="text-sm font-medium leading-none">{user.fullName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              raj.doe@example.com
+              {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
