@@ -3,8 +3,9 @@
 /**
  * @fileOverview An AI problem solver that adjusts difficulty based on student engagement and past performance.
  *
- * - gyanmitraAi - A function that provides AI-driven problem-solving assistance as a stream.
+ * - gyanmitraAi - A function that provides AI-driven problem-solving assistance.
  * - GyanMitraAiInput - The input type for the gyanmitraAi function.
+ * - GyanMitraAiOutput - The return type for the gyanmitraAi function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -35,23 +36,21 @@ const GyanMitraAiInputSchema = z.object({
 });
 export type GyanMitraAiInput = z.infer<typeof GyanMitraAiInputSchema>;
 
+const GyanMitraAiOutputSchema = z.object({
+    response: z.string().describe('The markdown-formatted response to the student.'),
+});
+export type GyanMitraAiOutput = z.infer<typeof GyanMitraAiOutputSchema>;
 
-export async function gyanmitraAi(input: GyanMitraAiInput) {
+
+export async function gyanmitraAi(input: GyanMitraAiInput): Promise<GyanMitraAiOutput> {
   return gyanmitraAiFlow(input);
 }
 
-
-const gyanmitraAiFlow = ai.defineFlow(
-  {
-    name: 'gyanmitraAiFlow',
-    inputSchema: GyanMitraAiInputSchema,
-    outputSchema: z.string(),
-    stream: true,
-  },
-  async (input) => {
-
-    const { stream } = await ai.generate({
-      prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
+const gyanmitraAiPrompt = ai.definePrompt({
+    name: 'gyanmitraAiPrompt',
+    input: { schema: GyanMitraAiInputSchema },
+    output: { schema: GyanMitraAiOutputSchema },
+    prompt: `You are an expert AI tutor. Your goal is to provide clear, direct, and engaging solutions to student questions. You are in a conversation with a student.
     
     Analyze the student's profile:
     - Engagement Level: {{{engagementLevel}}} (0=low, 1=high)
@@ -76,23 +75,19 @@ const gyanmitraAiFlow = ai.defineFlow(
         - For a student with **low engagement/performance**, the explanation should be more foundational.
         - For a student with **high engagement/performance**, the explanation can be more succinct.
     
-    Your response MUST be only the markdown text of the answer. Do not wrap it in JSON.
+    Your response MUST be only the markdown text of the answer, provided in the 'response' field of the output JSON.
     `,
-      data: input,
-      stream: true,
-    });
-      
-    const outputStream = new ReadableStream({
-      async start(controller) {
-          for await (const chunk of stream) {
-              if (chunk.text) {
-                  controller.enqueue(chunk.text);
-              }
-          }
-          controller.close();
-      }
-    });
-    
-    return outputStream;
+  });
+
+
+const gyanmitraAiFlow = ai.defineFlow(
+  {
+    name: 'gyanmitraAiFlow',
+    inputSchema: GyanMitraAiInputSchema,
+    outputSchema: GyanMitraAiOutputSchema,
+  },
+  async (input) => {
+    const { output } = await gyanmitraAiPrompt(input);
+    return output!;
   }
 );

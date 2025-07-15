@@ -1,18 +1,24 @@
 // src/app/api/chat/route.ts
-import { gyanmitraAi } from '@/ai/flows/gyanmitra-ai';
-import { NextRequest } from 'next/server';
-import { ai } from '@/ai/genkit';
+import { gyanmitraAi, GyanMitraAiOutput } from '@/ai/flows/gyanmitra-ai';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  const { question, engagementLevel, pastPerformance, history } = await req.json();
+  try {
+    const { question, engagementLevel, pastPerformance, history } = await req.json();
 
-  const stream = await gyanmitraAi({
-    question,
-    engagementLevel,
-    pastPerformance,
-    history,
-  });
+    const result: GyanMitraAiOutput = await gyanmitraAi({
+      question,
+      engagementLevel,
+      pastPerformance,
+      history,
+    });
 
-  // The stream from Genkit is directly compatible with the Response constructor.
-  return new Response(stream);
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Error in chat API route:', error);
+    return NextResponse.json(
+      { error: error.message || 'An unexpected error occurred.' },
+      { status: 500 }
+    );
+  }
 }

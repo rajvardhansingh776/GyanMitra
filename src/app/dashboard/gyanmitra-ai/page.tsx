@@ -36,6 +36,7 @@ import ReactMarkdown from "react-markdown";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import type { GyanMitraAiOutput } from "@/ai/flows/gyanmitra-ai";
 
 const formSchema = z.object({
   question: z
@@ -78,11 +79,7 @@ export default function GyanMitraAiPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const userMessage: Message = { role: "user", content: values.question };
-    setMessages((prev) => [
-      ...prev,
-      userMessage,
-      { role: "assistant", content: "" }, 
-    ]);
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
     form.reset({ ...values, question: "" });
 
@@ -111,28 +108,14 @@ export default function GyanMitraAiPage() {
         throw new Error(`API request failed with status ${response.status}`);
       }
       
-      if (!response.body) {
-        throw new Error("The response body is empty.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      const parsedResponse = await response.json() as GyanMitraAiOutput;
       
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: parsedResponse.response,
+      };
 
-        const chunk = decoder.decode(value, { stream: true });
-        
-        setMessages((prev) => {
-          const newMessages = [...prev];
-          const lastMessage = newMessages[newMessages.length - 1];
-          if (lastMessage.role === 'assistant') {
-            lastMessage.content += chunk;
-          }
-          return newMessages;
-        });
-      }
+      setMessages((prev) => [...prev, assistantMessage]);
 
     } catch (error) {
       console.error("Error solving problem:", error);
@@ -140,16 +123,7 @@ export default function GyanMitraAiPage() {
         role: "assistant",
         content: "I'm sorry, I encountered an error. Please check your API key or try again.",
       };
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        // Replace the empty assistant message with the error
-        if (newMessages[newMessages.length - 1]?.role === "assistant") {
-           newMessages[newMessages.length - 1] = errorMessage;
-        } else {
-           newMessages.push(errorMessage)
-        }
-        return newMessages;
-      });
+      setMessages((prev) => [...prev, errorMessage]);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -168,24 +142,6 @@ export default function GyanMitraAiPage() {
       }
     }
   };
-
-  const renderAssistantMessage = (message: Message, isLastMessage: boolean) => {
-    if (isLoading && isLastMessage && message.content === '') {
-       return (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm text-muted-foreground">Thinking...</span>
-          </div>
-       )
-    }
-
-    return (
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-           <ReactMarkdown>{message.content || ''}</ReactMarkdown>
-        </div>
-    )
-  };
-
 
   return (
     <>
@@ -268,6 +224,21 @@ export default function GyanMitraAiPage() {
                       <p>Your conversation will appear here.</p>
                     </div>
                   )}
+                  {isLoading && messages[messages.length-1]?.role === 'user' && (
+                     <div className="flex items-start gap-4">
+                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                          <AvatarFallback>
+                            <Bot className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="max-w-xl p-4 rounded-lg bg-card border shadow-sm">
+                           <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm text-muted-foreground">Thinking...</span>
+                           </div>
+                        </div>
+                     </div>
+                  )}
                   {messages.map((message, index) => (
                     <div
                       key={index}
@@ -291,11 +262,7 @@ export default function GyanMitraAiPage() {
                             : "bg-primary text-primary-foreground"
                         )}
                       >
-                       {message.role === 'user' ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></div>
-                       ) : (
-                         renderAssistantMessage(message, index === messages.length - 1)
-                       )}
+                         <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></div>
                       </div>
                       {message.role === "user" && (
                          <Avatar className="h-8 w-8">
