@@ -20,17 +20,16 @@ import { Switch } from "@/components/ui/switch";
 import { Bell, Settings, Palette, Loader2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes";
 
 type SettingsState = {
   emailNotifications: boolean;
   pushNotifications: boolean;
-  theme: "light" | "dark" | "system";
 };
 
 const defaultSettings: SettingsState = {
   emailNotifications: true,
   pushNotifications: false,
-  theme: "system",
 };
 
 export default function SettingsPage() {
@@ -38,6 +37,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<SettingsState>(defaultSettings);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     // Check if current settings are different from default settings
@@ -142,10 +142,8 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Select
-                  value={settings.theme}
-                  onValueChange={(value: SettingsState["theme"]) =>
-                    handleSettingChange("theme", value)
-                  }
+                  value={theme}
+                  onValueChange={setTheme}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select theme" />
