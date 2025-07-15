@@ -24,21 +24,13 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  CartesianGrid,
 } from "recharts";
 import { ArrowUpRight, BookOpen, Clock, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useUser } from "@/context/UserContext";
-
-const engagementData = [
-  { day: "Mon", engagement: Math.floor(Math.random() * 50) + 50 },
-  { day: "Tue", engagement: Math.floor(Math.random() * 50) + 50 },
-  { day: "Wed", engagement: Math.floor(Math.random() * 50) + 50 },
-  { day: "Thu", engagement: Math.floor(Math.random() * 50) + 50 },
-  { day: "Fri", engagement: Math.floor(Math.random() * 50) + 50 },
-  { day: "Sat", engagement: Math.floor(Math.random() * 50) + 50 },
-  { day: "Sun", engagement: Math.floor(Math.random() * 50) + 50 },
-];
+import { useState, useEffect } from "react";
 
 const recentSessions = [
   { subject: "Algebra II", status: "Completed", date: "2 days ago" },
@@ -50,6 +42,22 @@ const recentSessions = [
 export default function DashboardPage() {
   const { user } = useUser();
   const firstName = user.fullName.split(" ")[0];
+
+  const [engagementData, setEngagementData] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Generate engagement data on the client side to avoid hydration mismatch
+    const data = [
+      { day: "Mon", engagement: Math.floor(Math.random() * 50) + 50 },
+      { day: "Tue", engagement: Math.floor(Math.random() * 50) + 50 },
+      { day: "Wed", engagement: Math.floor(Math.random() * 50) + 50 },
+      { day: "Thu", engagement: Math.floor(Math.random() * 50) + 50 },
+      { day: "Fri", engagement: Math.floor(Math.random() * 50) + 50 },
+      { day: "Sat", engagement: Math.floor(Math.random() * 50) + 50 },
+      { day: "Sun", engagement: Math.floor(Math.random() * 50) + 50 },
+    ];
+    setEngagementData(data);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,6 +122,7 @@ export default function DashboardPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={engagementData}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="day"
                   stroke="#888888"
