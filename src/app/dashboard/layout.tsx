@@ -25,7 +25,7 @@ export default function DashboardLayout({
           <SidebarHeader className="border-b p-2">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg px-2">
               <BrainCircuit className="h-7 w-7 text-primary" />
-              <span className="group-[[data-state=collapsed]]:hidden">GyanMitra</span>
+              <span className="group-[[data-state=collapsed]]:hidden">GyanMitra AI</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>
