@@ -54,10 +54,10 @@ export default function SettingsPage() {
                  <div>
                   <Label htmlFor="push-notifications">Push Notifications</Label>
                   <p className="text-sm text-muted-foreground">
-                    Get push notifications on your devices. (Coming soon!)
+                    Get push notifications on your devices.
                   </p>
                 </div>
-                <Switch id="push-notifications" disabled />
+                <Switch id="push-notifications" />
               </div>
             </div>
           </div>
