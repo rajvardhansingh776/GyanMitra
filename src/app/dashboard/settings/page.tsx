@@ -42,29 +42,15 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<SettingsState>(savedSettingsData);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // This state tracks the chosen theme setting ('light', 'dark', 'system')
-  const [selectedTheme, setSelectedTheme] = useState(savedThemeValue);
-
   useEffect(() => {
     setMounted(true);
-    // When component mounts, sync the theme selection state from the provider
-    // The `theme` from useTheme() correctly gives us 'light', 'dark', or 'system'
-    setSelectedTheme(theme || 'system');
-  }, [theme]);
-
-  useEffect(() => {
-    if (!mounted) return;
-    // Check if current settings (including theme) are different from saved settings
-    const notificationsChanged =
-      JSON.stringify(settings) !== JSON.stringify(savedSettingsData);
-    const themeChanged = selectedTheme !== savedThemeValue;
-    setIsDirty(notificationsChanged || themeChanged);
-  }, [settings, selectedTheme, mounted]);
+    // On mount, restore settings from our "saved" data
+    setSettings(savedSettingsData);
+  }, []);
 
   const handleSettingChange = <K extends keyof SettingsState>(
     key: K,
@@ -73,10 +59,6 @@ export default function SettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleThemeSelectionChange = (value: string) => {
-    setSelectedTheme(value);
-  }
-
   const handleSaveChanges = () => {
     setIsLoading(true);
     // Simulate API call to save settings
@@ -84,11 +66,9 @@ export default function SettingsPage() {
       // In a real app, you'd update your backend here.
       // For this simulation, we'll update our 'saved' data objects.
       Object.assign(savedSettingsData, settings);
-      savedThemeValue = selectedTheme;
-      setTheme(selectedTheme); // Apply the theme globally
+      savedThemeValue = theme || 'system';
       
       setIsLoading(false);
-      setIsDirty(false); 
       toast({
         title: "Settings Saved",
         description: "Your new settings have been applied.",
@@ -100,8 +80,7 @@ export default function SettingsPage() {
     setIsLoading(true);
     setTimeout(() => {
       setSettings(savedSettingsData);
-      setSelectedTheme(savedThemeValue);
-      setTheme(savedThemeValue); // Also reset the live theme
+      setTheme(savedThemeValue); 
       setIsLoading(false);
       toast({
         title: "Settings Reset",
@@ -110,6 +89,32 @@ export default function SettingsPage() {
       });
     }, 500);
   };
+  
+  if (!mounted) {
+    return (
+      <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-32" />
+            </div>
+             <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-8">
+             <Skeleton className="h-24 w-full" />
+             <Skeleton className="h-24 w-full" />
+             <div className="flex justify-end gap-2">
+                <Skeleton className="h-10 w-20" />
+                <Skeleton className="h-10 w-32" />
+             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettingsData) || theme !== savedThemeValue;
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
@@ -178,29 +183,25 @@ export default function SettingsPage() {
                     Select your preferred color scheme.
                   </p>
                 </div>
-                {!mounted ? (
-                  <Skeleton className="w-[180px] h-10" />
-                ) : (
-                  <Select
-                    value={selectedTheme}
-                    onValueChange={handleThemeSelectionChange}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+                <Select
+                  value={theme}
+                  onValueChange={setTheme}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="system">System</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleReset} disabled={isLoading || !isDirty}>
+              <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
                 Reset
               </Button>
               <Button onClick={handleSaveChanges} disabled={!isDirty || isLoading}>
