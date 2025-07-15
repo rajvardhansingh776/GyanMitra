@@ -42,9 +42,7 @@ export default function SettingsPage() {
   useEffect(() => {
     // Check if current settings are different from default settings
     const hasChanged =
-      settings.emailNotifications !== defaultSettings.emailNotifications ||
-      settings.pushNotifications !== defaultSettings.pushNotifications ||
-      settings.theme !== defaultSettings.theme;
+      JSON.stringify(settings) !== JSON.stringify(defaultSettings);
     setIsDirty(hasChanged);
   }, [settings]);
 
@@ -162,7 +160,7 @@ export default function SettingsPage() {
             </div>
           </div>
            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleReset} disabled={!isDirty || isLoading}>
+              <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
                 Reset to Defaults
               </Button>
               <Button onClick={handleSaveChanges} disabled={!isDirty || isLoading}>
