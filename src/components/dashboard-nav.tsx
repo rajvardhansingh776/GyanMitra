@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Video,
   BookOpenText,
-  Wrench,
 } from "lucide-react";
 
 import {
@@ -33,28 +32,14 @@ const navItems = [
   },
 ];
 
-const devNavItems = [
-  {
-    href: "http://localhost:4000",
-    label: "Dev Tools",
-    icon: Wrench,
-    external: true,
-  },
-];
-
 export function DashboardNav() {
   const pathname = usePathname();
 
-  const allNavItems =
-    process.env.NODE_ENV === "development"
-      ? [...navItems, ...devNavItems]
-      : navItems;
-
   return (
     <SidebarMenu>
-      {allNavItems.map((item) => (
+      {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>
+          <Link href={item.href}>
             <SidebarMenuButton
               isActive={pathname === item.href}
               tooltip={item.label}
