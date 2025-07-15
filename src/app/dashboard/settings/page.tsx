@@ -34,9 +34,15 @@ const savedSettingsData: SettingsState = {
   emailNotifications: true,
   pushNotifications: false,
 };
-
-// Represents the saved theme. In a real app, this would also come from a database.
 let savedThemeValue = "system";
+
+// Represents the application's default settings.
+const defaultSettingsData: SettingsState = {
+  emailNotifications: true,
+  pushNotifications: false,
+};
+const defaultThemeValue = "system";
+
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -46,22 +52,12 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   
-  const [selectedTheme, setSelectedTheme] = useState(savedThemeValue);
-
   useEffect(() => {
     setMounted(true);
     // On mount, restore settings from our "saved" data
     setSettings(savedSettingsData);
-    setSelectedTheme(savedThemeValue);
   }, []);
   
-  useEffect(() => {
-    if(mounted) {
-      setSelectedTheme(theme || 'system');
-    }
-  }, [theme, mounted]);
-
-
   const handleSettingChange = <K extends keyof SettingsState>(
     key: K,
     value: SettingsState[K]
@@ -76,8 +72,7 @@ export default function SettingsPage() {
       // In a real app, you'd update your backend here.
       // For this simulation, we'll update our 'saved' data objects.
       Object.assign(savedSettingsData, settings);
-      savedThemeValue = selectedTheme;
-      setTheme(selectedTheme);
+      savedThemeValue = theme || 'system';
       
       setIsLoading(false);
       toast({
@@ -88,13 +83,11 @@ export default function SettingsPage() {
   };
   
   const handleReset = () => {
-    // No need to set loading state for a quick reset
-    setSettings(savedSettingsData);
-    setSelectedTheme(savedThemeValue); 
-    setTheme(savedThemeValue); 
+    setSettings(defaultSettingsData);
+    setTheme(defaultThemeValue); 
     toast({
       title: "Settings Reset",
-      description: "Your settings have been restored to the last saved state.",
+      description: "Your settings have been reset to their defaults.",
       variant: 'default'
     });
   };
@@ -143,7 +136,7 @@ export default function SettingsPage() {
     );
   }
 
-  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettingsData) || selectedTheme !== savedThemeValue;
+  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettingsData) || (theme || 'system') !== savedThemeValue;
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
@@ -213,8 +206,8 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Select
-                  value={selectedTheme}
-                  onValueChange={setSelectedTheme}
+                  value={theme}
+                  onValueChange={setTheme}
                   disabled={isLoading}
                 >
                   <SelectTrigger className="w-[180px]">
@@ -231,7 +224,7 @@ export default function SettingsPage() {
           </div>
            <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
-                Reset
+                Reset to Default
               </Button>
               <Button onClick={handleSaveChanges} disabled={!isDirty || isLoading}>
                 {isLoading && (
