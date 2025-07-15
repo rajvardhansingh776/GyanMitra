@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bot,
   BrainCircuit,
@@ -51,6 +51,9 @@ const formSchema = z.object({
 export default function AiProblemSolverPage() {
   const [result, setResult] = useState<AiProblemSolverOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamedSolution, setStreamedSolution] = useState("");
+  const [streamedExplanation, setStreamedExplanation] = useState("");
+
   const { toast } = useToast();
   const router = useRouter();
 
@@ -63,9 +66,29 @@ export default function AiProblemSolverPage() {
     },
   });
 
+  const streamText = (text: string, setter: (text: string) => void) => {
+    return new Promise<void>((resolve) => {
+      let index = 0;
+      setter("");
+      const words = text.split(" ");
+      const interval = setInterval(() => {
+        if (index < words.length) {
+          setter((prev) => prev + (index > 0 ? " " : "") + words[index]);
+          index++;
+        } else {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 50); // Adjust speed of typing here
+    });
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
+    setStreamedSolution("");
+    setStreamedExplanation("");
+
     try {
       const response = await aiProblemSolver({
         question: values.question,
@@ -73,6 +96,11 @@ export default function AiProblemSolverPage() {
         pastPerformance: values.performance,
       });
       setResult(response);
+
+      await streamText(response.solution, setStreamedSolution);
+      if (response.explanation) {
+        await streamText(response.explanation, setStreamedExplanation);
+      }
     } catch (error) {
       console.error("Error solving problem:", error);
       toast({
@@ -214,7 +242,7 @@ export default function AiProblemSolverPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading && (
+                {isLoading && !result && (
                   <div className="space-y-4">
                     <Skeleton className="h-4 w-1/4" />
                     <Skeleton className="h-8 w-full" />
@@ -223,19 +251,21 @@ export default function AiProblemSolverPage() {
                   </div>
                 )}
                 {result && (
-                  <div className="space-y-6 animate-in fade-in-50">
+                  <div className="space-y-6">
                     <div>
                       <h3 className="font-semibold mb-2">Solution</h3>
                       <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/50 p-4 rounded-lg relative">
-                        <ReactMarkdown>{result.solution}</ReactMarkdown>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-7 w-7"
-                          onClick={() => copyToClipboard(result.solution)}
-                        >
-                          <ClipboardCheck className="h-4 w-4" />
-                        </Button>
+                        <ReactMarkdown>{streamedSolution}</ReactMarkdown>
+                        {streamedSolution === result.solution && (
+                           <Button
+                           variant="ghost"
+                           size="icon"
+                           className="absolute top-2 right-2 h-7 w-7"
+                           onClick={() => copyToClipboard(result.solution)}
+                         >
+                           <ClipboardCheck className="h-4 w-4" />
+                         </Button>
+                        )}
                       </div>
                     </div>
                     {result.difficultyLevel && (
@@ -250,7 +280,7 @@ export default function AiProblemSolverPage() {
                       <div>
                         <h3 className="font-semibold mb-2">Explanation</h3>
                         <div className="prose prose-sm dark:prose-invert max-w-none">
-                           <ReactMarkdown>{result.explanation}</ReactMarkdown>
+                           <ReactMarkdown>{streamedExplanation}</ReactMarkdown>
                         </div>
                       </div>
                     )}
