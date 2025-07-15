@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -29,31 +30,40 @@ type SettingsState = {
 };
 
 // Represents the settings as they are saved in a database.
-const savedSettings: SettingsState = {
+const savedSettingsData: SettingsState = {
   emailNotifications: true,
   pushNotifications: false,
 };
 
+// Represents the saved theme. In a real app, this would also come from a database.
+let savedThemeData = "system";
+
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<SettingsState>(savedSettings);
-  const [isDirty, setIsDirty] = useState(false);
+  const [settings, setSettings] = useState<SettingsState>(savedSettingsData);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // Separate state to track the "saved" theme state.
+  const [savedTheme, setSavedTheme] = useState(savedThemeData);
+
   useEffect(() => {
     setMounted(true);
-    // Load saved settings on initial render
-    setSettings(savedSettings);
+    // When component mounts, sync the saved theme state
+    setSavedTheme(savedThemeData); 
   }, []);
 
   useEffect(() => {
-    // Check if current settings are different from saved settings
-    const hasChanged =
-      JSON.stringify(settings) !== JSON.stringify(savedSettings);
-    setIsDirty(hasChanged);
-  }, [settings]);
+    if (!mounted) return;
+    // Check if current settings (including theme) are different from saved settings
+    const notificationsChanged =
+      JSON.stringify(settings) !== JSON.stringify(savedSettingsData);
+    const themeChanged = theme !== savedTheme;
+    setIsDirty(notificationsChanged || themeChanged);
+  }, [settings, theme, mounted, savedTheme]);
 
   const handleSettingChange = <K extends keyof SettingsState>(
     key: K,
@@ -67,8 +77,10 @@ export default function SettingsPage() {
     // Simulate API call to save settings
     setTimeout(() => {
       // In a real app, you'd update your backend here.
-      // For this simulation, we'll update our 'savedSettings' object.
-      Object.assign(savedSettings, settings);
+      // For this simulation, we'll update our 'saved' data objects.
+      Object.assign(savedSettingsData, settings);
+      savedThemeData = theme!;
+      setSavedTheme(theme!);
       
       setIsLoading(false);
       setIsDirty(false); 
@@ -80,7 +92,8 @@ export default function SettingsPage() {
   };
   
   const handleReset = () => {
-    setSettings(savedSettings);
+    setSettings(savedSettingsData);
+    setTheme(savedThemeData);
     toast({
       title: "Settings Reset",
       description: "Your settings have been restored to the last saved state.",
@@ -183,7 +196,7 @@ export default function SettingsPage() {
                 {isLoading && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Save Settings
+                Save Changes
               </Button>
             </div>
         </CardContent>
