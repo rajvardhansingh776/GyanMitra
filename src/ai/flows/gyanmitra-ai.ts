@@ -95,17 +95,3 @@ RULES:
 Your response must be structured to directly match the output schema.
 `,
 });
-
-// We are not using this flow directly in the UI anymore, but it's good practice
-// to have a flow defined for potential future use (e.g., in other flows).
-const gyanmitraAiFlow = ai.defineFlow(
-  {
-    name: 'gyanmitraAiFlow',
-    inputSchema: GyanMitraAiInputSchema,
-    outputSchema: GyanMitraAiOutputSchema,
-  },
-  async input => {
-    const {output} = await gyanmitraAiPrompt(input);
-    return output!;
-  }
-);

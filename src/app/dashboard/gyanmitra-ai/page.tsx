@@ -51,7 +51,10 @@ const formSchema = z.object({
 
 type Message = {
   role: "user" | "assistant";
-  content: string;
+  content: string; // For user messages, this is the raw text. For assistant, it's the full JSON.
+  solution?: string;
+  explanation?: string;
+  isStreaming?: boolean;
 };
 
 export default function GyanMitraAiPage() {
@@ -81,17 +84,18 @@ export default function GyanMitraAiPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const userMessage: Message = { role: "user", content: values.question };
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setIsLoading(true);
     form.reset({ ...values, question: "" });
 
     const history = messages.map((msg) => ({
       role: msg.role,
-      content: msg.content,
+      content: msg.role === 'user' ? msg.content : (JSON.parse(msg.content) as GyanMitraAiOutput).solution,
     }));
 
     // Add a placeholder for the assistant's response
-    setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+    setMessages((prev) => [...prev, { role: 'assistant', content: '', isStreaming: true }]);
 
     try {
       const response = await fetch('/api/chat', {
@@ -121,17 +125,31 @@ export default function GyanMitraAiPage() {
         done = doneReading;
         const chunk = decoder.decode(value, { stream: true });
         fullResponse += chunk;
-        setMessages((prev) =>
-          prev.map((msg, i) =>
-            i === prev.length - 1 ? { ...msg, content: fullResponse } : msg
-          )
-        );
       }
+      
+      const parsedResponse = JSON.parse(fullResponse) as GyanMitraAiOutput;
+      
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: fullResponse, // Store raw JSON
+        solution: parsedResponse.solution,
+        explanation: parsedResponse.explanation,
+        isStreaming: false,
+      };
+
+      // Replace the streaming placeholder with the final message
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        updatedMessages[updatedMessages.length - 1] = assistantMessage;
+        return updatedMessages;
+      });
+
     } catch (error) {
       console.error("Error solving problem:", error);
       const errorMessage: Message = {
         role: "assistant",
         content: "I'm sorry, I encountered an error. Please try again.",
+        solution: "I'm sorry, I encountered an error. Please try again.",
       };
       // Replace the placeholder with the error message
       setMessages((prev) => prev.slice(0, -1).concat(errorMessage));
@@ -153,46 +171,6 @@ export default function GyanMitraAiPage() {
       }
     }
   };
-  
-  const extractAndRender = (content: string) => {
-    try {
-      // Try to parse the content as JSON. If it fails, it's a partial stream.
-      const parsed = JSON.parse(content) as GyanMitraAiOutput;
-      return (
-         <>
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-               <ReactMarkdown>{parsed.solution}</ReactMarkdown>
-            </div>
-            {parsed.explanation && (
-              <div className="mt-4 pt-4 border-t">
-                <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Explanation
-                </h3>
-                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown>{parsed.explanation}</ReactMarkdown>
-                </div>
-              </div>
-            )}
-         </>
-      );
-    } catch (e) {
-      // If parsing fails, it's likely a partial response. Render what we have.
-      let partialContent = content;
-      // Clean up common partial JSON artifacts for better display
-      partialContent = partialContent.replace(/^{\s*"solution"\s*:\s*"/, '');
-      partialContent = partialContent.replace(/",\s*"explanation"\s*:.*/, '');
-      partialContent = partialContent.replace(/\\n/g, '\n').replace(/\\"/g, '"');
-      
-      return (
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-           <ReactMarkdown>{partialContent}</ReactMarkdown>
-           <Loader2 className="h-4 w-4 animate-spin ml-2 inline-block" />
-        </div>
-      );
-    }
-  };
-
 
   return (
     <div className="flex flex-col gap-4">
@@ -297,10 +275,31 @@ export default function GyanMitraAiPage() {
                             : "bg-primary text-primary-foreground"
                         )}
                       >
-                       {message.role === 'assistant'
-                         ? extractAndRender(message.content)
-                         : <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></div>
-                       }
+                       {message.role === 'user' ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{message.content}</ReactMarkdown></div>
+                       ) : message.isStreaming ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm text-muted-foreground">Thinking...</span>
+                          </div>
+                       ) : (
+                         <>
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                               <ReactMarkdown>{message.solution || ''}</ReactMarkdown>
+                            </div>
+                            {message.explanation && (
+                              <div className="mt-4 pt-4 border-t">
+                                <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                  Explanation
+                                </h3>
+                                 <div className="prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown>{message.explanation}</ReactMarkdown>
+                                </div>
+                              </div>
+                            )}
+                         </>
+                       )}
                       </div>
                       {message.role === "user" && (
                          <Avatar className="h-8 w-8">
@@ -309,21 +308,6 @@ export default function GyanMitraAiPage() {
                       )}
                     </div>
                   ))}
-                  {isLoading && messages[messages.length - 1]?.role === "user" && (
-                     <div className="flex items-start gap-4">
-                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                           <AvatarFallback>
-                             <Bot className="h-5 w-5" />
-                           </AvatarFallback>
-                         </Avatar>
-                       <div className="max-w-xl p-4 rounded-lg bg-muted">
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm text-muted-foreground">Thinking...</span>
-                          </div>
-                       </div>
-                     </div>
-                  )}
                 </div>
               </ScrollArea>
               <div className="mt-auto pt-4">
